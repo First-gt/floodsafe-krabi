@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   AlertTriangle,
   ArrowUp,
@@ -109,13 +109,53 @@ export function RoutePlanner(p: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
   const [showWhy, setShowWhy] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 640);
+  const [nominatimResults, setNominatimResults] = useState<Place[]>([]);
+
+  useEffect(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) {
+      setNominatimResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}+krabi&format=json&limit=5&countrycodes=th`, {
+          headers: { 'User-Agent': 'FloodSafeKrabi/1.0' }
+        });
+        const data = await res.json();
+        const mapped: Place[] = data.map((item: any) => ({
+          id: `nom-${item.place_id}`,
+          name: item.name || item.display_name.split(',')[0],
+          alias: item.display_name,
+          district: 'Mueang Krabi', // fallback
+          lng: parseFloat(item.lon),
+          lat: parseFloat(item.lat),
+          kind: item.type === 'hospital' ? 'hospital' : 'town'
+        }));
+        setNominatimResults(mapped);
+      } catch (err) {
+        console.error('Nominatim search failed:', err);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return PLACES.filter(
+    const local = PLACES.filter(
       (pl) => !q || pl.name.toLowerCase().includes(q) || pl.alias.toLowerCase().includes(q) || DISTRICT_TH[pl.district].includes(q),
-    ).slice(0, 6);
-  }, [query]);
+    ).slice(0, 5);
+    
+    if (!q) return local;
+
+    const combined = [...local];
+    for (const nom of nominatimResults) {
+      if (!combined.some(c => c.name === nom.name || (Math.abs(c.lng - nom.lng) < 0.0001 && Math.abs(c.lat - nom.lat) < 0.0001))) {
+        combined.push(nom);
+      }
+    }
+    return combined.slice(0, 6);
+  }, [query, nominatimResults]);
 
   const select = (pl: Place) => {
     p.onSelectDestination({ name: pl.name, coord: [pl.lng, pl.lat] });
