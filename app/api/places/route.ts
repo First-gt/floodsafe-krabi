@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
   }
 
-  const LONGDO_KEY = process.env.NEXT_PUBLIC_LONGDO_KEY || process.env.LONGDO_KEY;
+  const LONGDO_KEY = process.env.NEXT_PUBLIC_LONGDO_KEY || process.env.LONGDO_KEY || 'ba9de16710bd8d1db081440317616305';
 
   if (LONGDO_KEY && LONGDO_KEY !== 'วาง_KEY_ตรงนี้') {
     try {
