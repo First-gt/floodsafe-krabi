@@ -223,7 +223,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
 /* สถานที่สำหรับค้นหาปลายทาง (alias = ชื่อภาษาอังกฤษ ใช้ค้นหา)           */
 /* ------------------------------------------------------------------ */
 export const PLACES: Place[] = [
-  { id: 'p1', name: 'โรงพยาบาลกระบี่', alias: 'Krabi Hospital', district: 'Mueang Krabi', lng: 98.9115, lat: 8.0905, kind: 'hospital' },
+  { id: 'p1', name: 'โรงพยาบาลกระบี่', alias: 'Krabi Hospital', district: 'Mueang Krabi', lng: 98.914908, lat: 8.07635, kind: 'hospital' },
   { id: 'p2', name: 'ตัวเมืองกระบี่', alias: 'Krabi Town', district: 'Mueang Krabi', lng: 98.9063, lat: 8.0863, kind: 'town' },
   { id: 'p3', name: 'ท่าอากาศยานกระบี่', alias: 'Krabi Airport', district: 'Mueang Krabi', lng: 98.986, lat: 8.099, kind: 'transport' },
   { id: 'p4', name: 'ท่าเรือเจ้าฟ้า', alias: 'Chao Fah Pier', district: 'Mueang Krabi', lng: 98.915, lat: 8.062, kind: 'transport' },
