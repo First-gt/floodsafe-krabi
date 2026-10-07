@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #0b1120;
+  color: #e2e8f0;
+  overscroll-behavior: none;
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/10 bg-navy-900/70 shadow-xl shadow-black/30 backdrop-blur-xl;
+  }
+  .glass-soft {
+    @apply border border-white/10 bg-white/[0.04] backdrop-blur-md;
+  }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-400 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-ocean-500 text-navy-950 hover:bg-ocean-400 font-semibold;
+  }
+  .btn-ghost {
+    @apply btn border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-red-400 font-semibold;
+  }
+  .field {
+    @apply min-h-[44px] w-full rounded-xl border border-white/10 bg-navy-950/70 px-3 text-sm text-slate-100 placeholder:text-slate-500
+      focus:border-ocean-400 focus:outline-none focus:ring-2 focus:ring-ocean-400/40;
+  }
+}
+
+/* scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+/* range slider */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e 0%, #22c55e 8%, #f59e0b 8%, #f59e0b 16%, #ef4444 16%, #ef4444 100%);
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 28px;
+  width: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid #22d3ee;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+input[type='range']::-moz-range-thumb {
+  height: 22px;
+  width: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid #22d3ee;
+  cursor: pointer;
+}
+
+/* ---------- Map markers & popups ---------- */
+.maplibregl-popup-content {
+  background: rgba(15, 23, 42, 0.96) !important;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  font-family: inherit;
+  min-width: 200px;
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: rgba(15, 23, 42, 0.96) !important; }
+.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: rgba(15, 23, 42, 0.96) !important; }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: rgba(15, 23, 42, 0.96) !important; }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: rgba(15, 23, 42, 0.96) !important; }
+.maplibregl-popup-close-button { color: #94a3b8; font-size: 20px; padding: 2px 8px; }
+.maplibregl-ctrl-attrib { background: rgba(11, 17, 32, 0.7) !important; color: #94a3b8 !important; }
+.maplibregl-ctrl-attrib a { color: #67e8f9 !important; }
+.maplibregl-ctrl-group { background: rgba(15, 23, 42, 0.85) !important; border: 1px solid rgba(255,255,255,.1); }
+.maplibregl-ctrl-group button + button { border-top: 1px solid rgba(255,255,255,.1) !important; }
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1); }
+
+.fs-cp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0b1120;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.fs-cp:hover { transform: scale(1.12); }
+.fs-cp-dot { width: 16px; height: 16px; min-width: 16px; padding: 0; border-width: 2px; }
+
+.fs-inc {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  color: #0b1120;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s;
+}
+.fs-inc.sel { transform: scale(1.3); border-color: #22d3ee; z-index: 5; }
+.fs-inc.pulse::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: fs-pulse 1.6s ease-out infinite;
+  color: inherit;
+}
+.fs-user {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #38bdf8;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7);
+  animation: fs-ring 2s infinite;
+}
+.fs-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+  font-weight: 700;
+  font-size: 12px;
+  color: #0b1120;
+}
+.fs-pin > span { transform: rotate(45deg); }
+
+@keyframes fs-pulse {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes fs-ring {
+  0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); }
+  70% { box-shadow: 0 0 0 16px rgba(56, 189, 248, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
+@keyframes wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-40px); }
+}
+
+/* ---- สถานที่สำคัญ & ป้ายอำเภอบนแผนที่ ---- */
+.fs-place {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.fs-place-ic {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  flex-shrink: 0;
+}
+.fs-place-label {
+  max-width: 150px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.fs-zoom-low .fs-place-label {
+  display: none;
+}
+.fs-district {
+  pointer-events: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(11, 17, 32, 0.78);
+  color: #e0f2fe;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid rgba(103, 232, 249, 0.5);
+}
+.maplibregl-map:not(.fs-zoom-low) .fs-district {
+  display: none;
+}
