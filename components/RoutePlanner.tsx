@@ -119,22 +119,14 @@ export function RoutePlanner(p: Props) {
     }
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}+krabi&format=json&limit=5&countrycodes=th`, {
-          headers: { 'User-Agent': 'FloodSafeKrabi/1.0' }
-        });
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+        const res = await fetch(`${basePath}/api/places?q=${encodeURIComponent(q)}`);
         const data = await res.json();
-        const mapped: Place[] = data.map((item: any) => ({
-          id: `nom-${item.place_id}`,
-          name: item.name || item.display_name.split(',')[0],
-          alias: item.display_name,
-          district: 'Mueang Krabi', // fallback
-          lng: parseFloat(item.lon),
-          lat: parseFloat(item.lat),
-          kind: item.type === 'hospital' ? 'hospital' : 'town'
-        }));
-        setNominatimResults(mapped);
+        if (data.results) {
+          setNominatimResults(data.results);
+        }
       } catch (err) {
-        console.error('Nominatim search failed:', err);
+        console.error('Place search failed:', err);
       }
     }, 500);
     return () => clearTimeout(timer);
