@@ -8,37 +8,46 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
   }
 
-  const GOOGLE_KEY = process.env.GOOGLE_MAPS_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
+  const LONGDO_KEY = process.env.NEXT_PUBLIC_LONGDO_KEY || process.env.LONGDO_KEY;
 
-  if (GOOGLE_KEY) {
+  if (LONGDO_KEY && LONGDO_KEY !== 'วาง_KEY_ตรงนี้') {
     try {
-      // Use Google Places API (Text Search) for the best POI match in Krabi
-      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
-        query
-      )}+Krabi+Thailand&key=${GOOGLE_KEY}&language=th`;
+      // Use Longdo Map Search API (restrict search vaguely to Krabi by adding "กระบี่")
+      const searchKeyword = query.includes('กระบี่') ? query : `${query} กระบี่`;
+      const url = `https://search.longdo.com/mapsearch/json/search?keyword=${encodeURIComponent(
+        searchKeyword
+      )}&limit=6&key=${LONGDO_KEY}`;
       
       const res = await fetch(url);
-      const data = await res.json();
+      const data = await res.json(); // Longdo might return a JSON array or { data: [...] } or { meta, data }
 
-      if (data.results) {
-        const mapped = data.results.slice(0, 5).map((item: any) => ({
-          id: `gmap-${item.place_id}`,
-          name: item.name,
-          alias: item.formatted_address,
+      let results = [];
+      if (Array.isArray(data)) {
+        results = data;
+      } else if (data && Array.isArray(data.data)) {
+        results = data.data;
+      }
+
+      if (results.length > 0) {
+        const mapped = results.map((item: any) => ({
+          id: `longdo-${item.id || Math.random().toString(36).substring(7)}`,
+          name: item.name || item.title || query,
+          alias: item.address || item.description || '',
           district: 'Mueang Krabi', // fallback
-          lng: item.geometry.location.lng,
-          lat: item.geometry.location.lat,
-          kind: item.types?.includes('hospital') ? 'hospital' : 'town',
-        }));
-        return NextResponse.json({ results: mapped, source: 'google' });
+          lng: parseFloat(item.lon || item.longitude),
+          lat: parseFloat(item.lat || item.latitude),
+          kind: 'town',
+        })).filter((m: any) => !isNaN(m.lng) && !isNaN(m.lat));
+        
+        return NextResponse.json({ results: mapped, source: 'longdo' });
       }
     } catch (err) {
-      console.error('Google Places API Error:', err);
+      console.error('Longdo API Error:', err);
       // Fallback to OSM
     }
   }
 
-  // Fallback to OpenStreetMap Nominatim if no Google Key or Google fails
+  // Fallback to OpenStreetMap Nominatim if no Longdo Key or Longdo fails
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query

@@ -47,9 +47,32 @@ export interface FloodMapProps {
  * หมายเหตุ: ไม่สามารถใช้ tile ของ Google Maps กับ MapLibre ได้ (ผิดข้อกำหนดและต้องมี key)
  */
 const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
-const VECTOR_STYLE_URL = MAPTILER_KEY
-  ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
-  : 'https://tiles.openfreemap.org/styles/liberty';
+const LONGDO_KEY = process.env.NEXT_PUBLIC_LONGDO_KEY;
+
+const VECTOR_STYLE_URL: maplibregl.StyleSpecification | string = LONGDO_KEY && LONGDO_KEY !== 'วาง_KEY_ตรงนี้'
+  ? {
+      version: 8,
+      sources: {
+        longdo: {
+          type: 'raster',
+          tiles: [`https://ms.longdo.com/mmmap/tile.php?zoom={z}&x={x}&y={y}&key=${LONGDO_KEY}&proj=epsg3857&mode=icons`],
+          tileSize: 256,
+          attribution: '© <a href="https://map.longdo.com/">Longdo Map</a>'
+        }
+      },
+      layers: [
+        {
+          id: 'longdo-raster',
+          type: 'raster',
+          source: 'longdo',
+          minzoom: 0,
+          maxzoom: 20
+        }
+      ]
+    }
+  : MAPTILER_KEY
+    ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
+    : 'https://tiles.openfreemap.org/styles/liberty';
 const BASE_TILES = ['a', 'b', 'c'].map((s) => `https://${s}.tile.openstreetmap.org/{z}/{x}/{y}.png`);
 
 const FALLBACK_STYLE: maplibregl.StyleSpecification = {
