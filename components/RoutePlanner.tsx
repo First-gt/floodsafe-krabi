@@ -289,7 +289,7 @@ export function RoutePlanner(p: Props) {
                 {p.geoStatus === 'locating' ? 'กำลังหาตำแหน่ง…' : 'ใช้ตำแหน่งปัจจุบัน'}
               </button>
               <button className="mt-1.5 min-h-[40px] w-full rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-300 hover:bg-white/10" onClick={p.onUseDemo}>
-                หรือทดลองใช้พิกัด อ.อ่าวลึก (กระบี่)
+                หรือทดลองใช้พิกัด อ.หาดใหญ่ (สงขลา)
               </button>
             </div>
           )}

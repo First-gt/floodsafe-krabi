@@ -1,10 +1,10 @@
 import type { District, Passability, RescueNeed, Skill } from './types';
 
 export const DISTRICT_TH: Record<District, string> = {
-  'Mueang Krabi': 'เมืองกระบี่',
-  'Ao Luek': 'อ่าวลึก',
-  'Plai Phraya': 'พลายพระยา',
-  'Khlong Thom': 'คลองท่อม',
+  'Mueang Songkhla': 'เมืองสงขลา',
+  'Hat Yai': 'หาดใหญ่',
+  Sadao: 'สะเดา',
+  Ranot: 'ระโนด',
 };
 
 export const SKILL_LABEL: Record<Skill, string> = {

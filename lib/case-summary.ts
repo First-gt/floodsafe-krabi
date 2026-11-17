@@ -12,7 +12,7 @@ export function buildCaseSummary(inc: Incident, agency?: Agency): string {
   const rec = inc.recommendation;
   const lines: string[] = [];
   if (agency) lines.push(`ถึง: ${agency.name}`);
-  lines.push(`🆘 แจ้งเหตุน้ำท่วม จ.กระบี่ [${PRIORITY_LABEL[rec.priority]}]`);
+  lines.push(`🆘 แจ้งเหตุน้ำท่วม จ.สงขลา [${PRIORITY_LABEL[rec.priority]}]`);
   lines.push(`📍 ${inc.locationName} อ.${DISTRICT_TH[inc.district]}`);
   lines.push(`🗺 ${mapLink(inc.lat, inc.lng)}`);
   lines.push(`💧 ระดับน้ำ ${Math.round(inc.depthCm)} ซม. · รถ: ${PASSABILITY_LABEL[inc.passability]}`);
@@ -30,7 +30,7 @@ export function buildCaseSummary(inc: Incident, agency?: Agency): string {
   const photoOk = inc.photoReviews?.filter((r) => r.status === 'verified').length ?? 0;
   if (inc.photos.length) lines.push(`📷 แนบรูป ${inc.photos.length} รูป (ผ่านตรวจสอบ ${photoOk})`);
   lines.push(`🕒 ${new Date(inc.createdAt).toLocaleString('th-TH')}`);
-  lines.push(`รหัสเคส: ${inc.id} · ส่งผ่าน FloodSafe กระบี่`);
+  lines.push(`รหัสเคส: ${inc.id} · ส่งผ่าน FloodSafe สงขลา`);
   return lines.join('\n');
 }
 

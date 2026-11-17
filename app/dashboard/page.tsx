@@ -6,7 +6,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { IncidentCard } from '@/components/IncidentCard';
 import { FloodMap } from '@/components/MapView';
 import type { LngLat } from '@/lib/geo';
-import { KRABI_CENTER } from '@/lib/mock-data';
+import { SONGKLA_CENTER } from '@/lib/mock-data';
 import { useFloodStore } from '@/lib/store';
 import type { IncidentStatus } from '@/lib/types';
 import { PRIORITY_ORDER, cn } from '@/lib/utils';
@@ -128,7 +128,7 @@ export default function DashboardPage() {
             selectedIncidentId={selected}
             onSelectIncident={onMapSelect}
             flyTo={flyTo}
-            initialCenter={KRABI_CENTER}
+            initialCenter={SONGKLA_CENTER}
             initialZoom={8.9}
           />
           <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">

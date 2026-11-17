@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { inKrabi, type LngLat } from './geo';
+import { inSongkhla, type LngLat } from './geo';
 
 export type GeoStatus = 'idle' | 'locating' | 'ready' | 'denied' | 'unsupported';
 
@@ -36,5 +36,5 @@ export function useGeolocation() {
     [],
   );
 
-  return { position, accuracy, status, request, insideKrabi: position ? inKrabi(position) : false };
+  return { position, accuracy, status, request, insideSongkhla: position ? inSongkhla(position) : false };
 }

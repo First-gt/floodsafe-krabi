@@ -70,9 +70,9 @@ export async function POST(req: Request) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
         body: JSON.stringify({
-          from: process.env.FORWARD_EMAIL_FROM || 'FloodSafe Krabi <onboarding@resend.dev>',
+          from: process.env.FORWARD_EMAIL_FROM || 'FloodSafe Songkhla <onboarding@resend.dev>',
           to: emailTo.split(',').map((s) => s.trim()).filter(Boolean),
-          subject: `[FloodSafe กระบี่] ส่งต่อเคส ${incidentId}${agency ? ` → ${agency}` : ''}`,
+          subject: `[FloodSafe สงขลา] ส่งต่อเคส ${incidentId}${agency ? ` → ${agency}` : ''}`,
           text,
         }),
         signal: AbortSignal.timeout(8000),

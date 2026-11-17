@@ -12,9 +12,9 @@ const prompt = Prompt({
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'FloodSafe กระบี่ – นำทางหลบน้ำท่วมด้วย AI และศูนย์สั่งการกู้ภัย',
+  title: 'FloodSafe สงขลา – นำทางหลบน้ำท่วมด้วย AI และศูนย์สั่งการกู้ภัย',
   description:
-    'ระบบนำทางหลบน้ำท่วมแบบเรียลไทม์ รายงานระดับน้ำจากประชาชน และ AI ช่วยจัดสรรทรัพยากรกู้ภัย จังหวัดกระบี่',
+    'ระบบนำทางหลบน้ำท่วมแบบเรียลไทม์ รายงานระดับน้ำจากประชาชน และ AI ช่วยจัดสรรทรัพยากรกู้ภัย จังหวัดสงขลา',
 };
 
 export const viewport: Viewport = {

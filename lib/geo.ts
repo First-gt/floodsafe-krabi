@@ -63,9 +63,9 @@ export function formatDistance(m: number): string {
   return m < 1000 ? `${Math.max(10, Math.round(m / 10) * 10)} ม.` : `${(m / 1000).toFixed(1)} กม.`;
 }
 
-/** Krabi province rough bounding box – used to decide if a GPS fix is usable for the demo. */
-export function inKrabi(p: LngLat): boolean {
-  return p[1] > 7.6 && p[1] < 8.75 && p[0] > 98.5 && p[0] < 99.45;
+/** Songkhla province rough bounding box – used to decide if a GPS fix is usable for the demo. */
+export function inSongkhla(p: LngLat): boolean {
+  return p[1] >= 6.35 && p[1] <= 7.95 && p[0] >= 100.05 && p[0] <= 101.05;
 }
 
 /** ????????????????? p ?? distM ???? ?????? bearingDeg */

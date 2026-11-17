@@ -18,12 +18,12 @@ export function AppHeader() {
 
   return (
     <header className="glass z-30 flex h-14 shrink-0 items-center gap-2 border-x-0 border-t-0 px-3 sm:gap-4 sm:px-5">
-      <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="FloodSafe Krabi หน้าแรก">
+      <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="FloodSafe สงขลา หน้าแรก">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-ocean-500 text-navy-950">
           <Waves size={20} strokeWidth={2.5} />
         </span>
         <span className="min-w-0 leading-tight">
-          <span className="block truncate text-sm font-semibold text-white">FloodSafe กระบี่</span>
+          <span className="block truncate text-sm font-semibold text-white">FloodSafe สงขลา</span>
           <span className="hidden truncate text-[11px] text-slate-400 sm:block">เช็กเส้นทางหลบน้ำท่วม · แจ้งเหตุฉุกเฉิน</span>
         </span>
       </Link>

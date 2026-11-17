@@ -1,6 +1,6 @@
 import type { LngLat } from './geo';
 
-export type District = 'Mueang Krabi' | 'Ao Luek' | 'Plai Phraya' | 'Khlong Thom';
+export type District = 'Mueang Songkhla' | 'Hat Yai' | 'Sadao' | 'Ranot';
 
 export type VehicleMode = 'car' | 'pickup';
 export type Passability = 'passable' | 'pickup_only' | 'blocked';

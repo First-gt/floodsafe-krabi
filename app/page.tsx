@@ -10,7 +10,7 @@ import { ReportSheet } from '@/components/ReportSheet';
 import { RoutePlanner, type Destination } from '@/components/RoutePlanner';
 import { VehicleSetup } from '@/components/VehicleSetup';
 import { haversine, type LngLat } from '@/lib/geo';
-import { DEMO_ORIGIN, KRABI_CENTER, PLACES } from '@/lib/mock-data';
+import { DEMO_ORIGIN, PLACES, SONGKLA_CENTER } from '@/lib/mock-data';
 import type { RouteResult } from '@/lib/routing';
 import { distToLine } from '@/lib/route-eval';
 import { planRoute } from '@/lib/smart-route';
@@ -67,12 +67,12 @@ export default function CitizenPage() {
 
   const hasGps = gps.status === 'ready' && !!gps.position;
   const locationReady = hasGps || useDemo;
-  const usingGps = hasGps && gps.insideKrabi;
+  const usingGps = hasGps && gps.insideSongkhla;
   const origin: LngLat = usingGps ? gps.position! : DEMO_ORIGIN.coord;
   const originName = usingGps
     ? 'ตำแหน่งของฉัน (GPS)'
     : hasGps
-      ? `${DEMO_ORIGIN.name} – GPS ของคุณอยู่นอกจังหวัดกระบี่`
+      ? `${DEMO_ORIGIN.name} – GPS ของคุณอยู่นอกจังหวัดสงขลา`
       : DEMO_ORIGIN.name;
 
   const originRef = useRef(origin);
@@ -378,8 +378,8 @@ export default function CitizenPage() {
             flyTo={flyTo}
             fitTo={fitTo}
             padding={padding}
-            initialCenter={[98.93, 8.17]}
-            initialZoom={9.6}
+            initialCenter={SONGKLA_CENTER}
+            initialZoom={9.4}
           />
 
           {/* แถบเครื่องมือแผนที่แบบแนวนอนด้านบนขวา (เดสก์ท็อป) / ด้านล่างขวา (มือถือ) */}

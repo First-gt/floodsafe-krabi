@@ -155,7 +155,7 @@ export function ReportSheet({ open, onClose, gps }: { open: boolean; onClose: ()
     if (!passTouched && depth !== null) setPassability(passabilityFromDepth(depth));
   }, [depth, passTouched]);
 
-  const useGps = !!gps.position && gps.insideKrabi;
+  const useGps = !!gps.position && gps.insideSongkhla;
   const coord = useGps ? gps.position! : area ? DISTRICTS[area].center : null;
 
   const photosRef = useRef(photos);
@@ -366,7 +366,7 @@ export function ReportSheet({ open, onClose, gps }: { open: boolean; onClose: ()
                         : gps.status === 'locating'
                           ? 'กำลังหาตำแหน่ง…'
                           : gps.position
-                            ? `จับ GPS ได้แล้ว${gps.accuracy ? ` (±${Math.round(gps.accuracy)} ม.)` : ''} แต่อยู่ห่างจากกระบี่ ~${Math.round(haversine(gps.position, DISTRICTS['Mueang Krabi'].center) / 1000).toLocaleString('th-TH')} กม. (นอกพื้นที่ให้บริการ) – กรุณาเลือกพื้นที่ด้านล่างเพื่อใช้เป็นพิกัดสาธิต`
+                            ? `จับ GPS ได้แล้ว${gps.accuracy ? ` (±${Math.round(gps.accuracy)} ม.)` : ''} แต่อยู่ห่างจากสงขลา ~${Math.round(haversine(gps.position, DISTRICTS['Hat Yai'].center) / 1000).toLocaleString('th-TH')} กม. (นอกพื้นที่ให้บริการ) – กรุณาเลือกพื้นที่ด้านล่างเพื่อใช้เป็นพิกัดสาธิต`
                             : gps.status === 'denied'
                               ? 'ไม่อนุญาตใช้ GPS – กรุณาเลือกพื้นที่'
                               : 'ไม่มีสัญญาณ GPS – กรุณาเลือกพื้นที่'}

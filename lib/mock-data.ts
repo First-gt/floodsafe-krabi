@@ -19,16 +19,16 @@ const MIN = 60_000;
 const NOW = Date.now();
 
 export const DISTRICTS: Record<District, { thai: string; center: LngLat; zoom: number }> = {
-  'Mueang Krabi': { thai: 'เมืองกระบี่', center: [98.9063, 8.0863], zoom: 12 },
-  'Ao Luek': { thai: 'อ่าวลึก', center: [98.764, 8.38], zoom: 12 },
-  'Plai Phraya': { thai: 'พลายพระยา', center: [98.7, 8.45], zoom: 12 },
-  'Khlong Thom': { thai: 'คลองท่อม', center: [99.166, 7.933], zoom: 12 },
+  'Mueang Songkhla': { thai: 'เมืองสงขลา', center: [100.5951, 7.1898], zoom: 12 },
+  'Hat Yai': { thai: 'หาดใหญ่', center: [100.4747, 7.0084], zoom: 12 },
+  Sadao: { thai: 'สะเดา', center: [100.421, 6.638], zoom: 12 },
+  Ranot: { thai: 'ระโนด', center: [100.322, 7.777], zoom: 12 },
 };
 
-export const KRABI_CENTER: LngLat = [98.93, 8.2];
+export const SONGKLA_CENTER: LngLat = [100.5, 7.12];
 
-/** จุดเริ่มต้นสาธิต เมื่อ GPS ของเบราว์เซอร์ไม่อยู่ในจังหวัดกระบี่ */
-export const DEMO_ORIGIN = { name: 'อ่าวลึก (ตำแหน่งสาธิต)', coord: [98.764, 8.38] as LngLat };
+/** จุดเริ่มต้นสาธิต เมื่อ GPS ของเบราว์เซอร์ไม่อยู่ในจังหวัดสงขลา */
+export const DEMO_ORIGIN = { name: 'หาดใหญ่ (ตำแหน่งสาธิต)', coord: [100.4747, 7.0084] as LngLat };
 
 /* ------------------------------------------------------------------ */
 /* จุดตรวจระดับน้ำจากประชาชน (วางบนเส้นถนนในกราฟ)                      */
@@ -48,36 +48,32 @@ const cp = (
 };
 
 export const INITIAL_CHECKPOINTS: Checkpoint[] = [
-  // พลายพระยา
-  cp('cp01', 'ถนนตลาดพลายพระยา', 'Plai Phraya', 'e1', 0.3, 55, 'citizen', 8),
-  cp('cp02', 'บ้านคลองหิน', 'Plai Phraya', 'e1', 0.7, 32, 'volunteer', 12),
-  cp('cp03', 'ทล.ท้องถิ่น 4151 – วัดพลายพระยา', 'Plai Phraya', 'e21', 0.5, 12, 'citizen', 20),
-  cp('cp04', 'เทศบาลพลายพระยา', 'Plai Phraya', 'e21', 0.1, 8, 'sensor', 3),
-  // อ่าวลึก
-  cp('cp05', 'สี่แยกอ่าวลึก', 'Ao Luek', 'e2', 0.6, 24, 'citizen', 15),
-  cp('cp06', 'บ้านอ่าวลึกใต้', 'Ao Luek', 'e3', 0.4, 68, 'volunteer', 5),
-  cp('cp07', 'วัดอ่าวลึก', 'Ao Luek', 'e3', 0.85, 15, 'citizen', 25),
-  cp('cp08', 'ถนนบ้านเขาทอง', 'Ao Luek', 'e22', 0.5, 11, 'citizen', 30),
-  cp('cp09', 'ถนนบ้านลำทับ', 'Ao Luek', 'e9', 0.5, 10, 'sensor', 4),
-  cp('cp10', 'บ้านห้วยพลู', 'Ao Luek', 'e10', 0.5, 18, 'citizen', 18),
-  cp('cp11', 'ถนนเขาพนม', 'Ao Luek', 'e4', 0.5, 45, 'volunteer', 9),
-  cp('cp12', 'สามแยกเขาพนม', 'Ao Luek', 'e5', 0.5, 14, 'citizen', 40),
-  // เมืองกระบี่
-  cp('cp13', 'บ้านหนองทะเล', 'Mueang Krabi', 'e6', 0.5, 28, 'citizen', 11),
-  cp('cp14', 'ทางเข้าโรงพยาบาลกระบี่', 'Mueang Krabi', 'e7', 0.6, 36, 'volunteer', 7),
-  cp('cp15', 'ถนนท่าเรือกระบี่', 'Mueang Krabi', 'e8', 0.5, 62, 'citizen', 6),
-  cp('cp16', 'ถนนเลี่ยงเมืองกระบี่', 'Mueang Krabi', 'e20', 0.5, 12, 'sensor', 2),
-  cp('cp17', 'ทล.4034 – บ้านคลองประสงค์', 'Mueang Krabi', 'e12', 0.4, 16, 'citizen', 22),
-  cp('cp18', 'ถนนสนามบิน', 'Mueang Krabi', 'e13', 0.5, 6, 'sensor', 1),
-  cp('cp19', 'ทช.4035 – บ้านทุ่งทราย', 'Ao Luek', 'e23', 0.5, 13, 'citizen', 35),
-  cp('cp20', 'สะพานเหนือคลอง', 'Mueang Krabi', 'e14', 0.5, 19, 'sensor', 4),
-  // คลองท่อม
-  cp('cp21', 'บ้านคลองพน', 'Mueang Krabi', 'e15', 0.5, 42, 'citizen', 13),
-  cp('cp22', 'คลองท่อมเหนือ', 'Khlong Thom', 'e16', 0.6, 38, 'volunteer', 10),
-  cp('cp23', 'ตลาดคลองท่อม', 'Khlong Thom', 'e18', 0.5, 72, 'citizen', 4),
-  cp('cp24', 'คลองท่อมใต้', 'Khlong Thom', 'e19', 0.5, 22, 'citizen', 17),
-  cp('cp25', 'ถนนเหนือคลอง', 'Mueang Krabi', 'e17', 0.5, 9, 'sensor', 3),
-  cp('cp26', 'ทช.4038 – บ้านบางแก้ว', 'Khlong Thom', 'e24', 0.5, 17, 'citizen', 28),
+  // ระโนด
+  cp('cp01', 'ตลาดระโนด (ทล.408)', 'Ranot', 'e1', 0.25, 58, 'citizen', 8),
+  cp('cp02', 'บ้านท่าบอน อ.ระโนด', 'Ranot', 'e1', 0.65, 34, 'volunteer', 12),
+  cp('cp03', 'หน้าเทศบาลสทิงพระ', 'Ranot', 'e2', 0.3, 14, 'citizen', 20),
+  cp('cp04', 'แยกจะทิ้งพระ', 'Ranot', 'e1', 0.85, 10, 'sensor', 3),
+  // เมืองสงขลา
+  cp('cp05', 'เชิงสะพานติณสูลานนท์ ฝั่งสิงหนคร', 'Mueang Songkhla', 'e3', 0.4, 22, 'citizen', 15),
+  cp('cp06', 'ถนนนครนอก (ย่านเมืองเก่าสงขลา)', 'Mueang Songkhla', 'e4', 0.35, 48, 'volunteer', 5),
+  cp('cp07', 'แยกสำโรง เมืองสงขลา', 'Mueang Songkhla', 'e22', 0.8, 16, 'citizen', 25),
+  cp('cp08', 'บ้านเกาะยอ (ทล.408)', 'Mueang Songkhla', 'e5', 0.3, 12, 'citizen', 30),
+  // หาดใหญ่
+  cp('cp09', 'ถนนลพบุรีราเมศวร์ (แยกคลองแห)', 'Hat Yai', 'e8', 0.6, 52, 'citizen', 6),
+  cp('cp10', 'วงเวียนน้ำพุ หาดใหญ่', 'Hat Yai', 'e7', 0.75, 42, 'volunteer', 7),
+  cp('cp11', 'แยกคอหงส์ (หน้า ม.อ.)', 'Hat Yai', 'e7', 0.25, 18, 'sensor', 4),
+  cp('cp12', 'ถนนกาญจนวนิช – บ้านน้ำน้อย', 'Hat Yai', 'e6', 0.5, 28, 'citizen', 11),
+  cp('cp13', 'ถนนเพชรเกษม – ควนเนียง', 'Hat Yai', 'e10', 0.55, 36, 'citizen', 14),
+  cp('cp14', 'ถนนสนามบิน – คลองหอยโข่ง', 'Hat Yai', 'e12', 0.5, 8, 'sensor', 2),
+  cp('cp15', 'เทศบาลเมืองบ้านพรุ', 'Hat Yai', 'e13', 0.6, 45, 'citizen', 9),
+  cp('cp16', 'ทางเลี่ยงเมืองหาดใหญ่ (ทล.414)', 'Hat Yai', 'e9', 0.5, 12, 'sensor', 3),
+  // สะเดา
+  cp('cp17', 'ตลาดคลองแงะ (ทล.4)', 'Sadao', 'e16', 0.7, 64, 'citizen', 5),
+  cp('cp18', 'บ้านพังลา อ.สะเดา', 'Sadao', 'e15', 0.6, 26, 'volunteer', 16),
+  cp('cp19', 'สี่แยกสะเดา', 'Sadao', 'e17', 0.85, 19, 'citizen', 22),
+  cp('cp20', 'ถนนด่านนอก – จังโหลน', 'Sadao', 'e18', 0.6, 15, 'sensor', 4),
+  cp('cp21', 'ถนนปาดังเบซาร์ (ทล.4054)', 'Sadao', 'e19', 0.5, 31, 'citizen', 18),
+  cp('cp22', 'แยกจะนะ (ทล.43)', 'Mueang Songkhla', 'e21', 0.75, 14, 'citizen', 28),
 ];
 
 /* ------------------------------------------------------------------ */
@@ -115,27 +111,26 @@ const zone = (
 });
 
 export const FLOOD_ZONES: FloodZone[] = [
-  zone('แอ่งพลายพระยา', 'Plai Phraya', 'high', [98.704, 8.442], 2.2, 1.3, 20, 1),
-  zone('ที่ราบน้ำท่วมอ่าวลึก', 'Ao Luek', 'high', pointOnEdge('e3', 0.4), 3.2, 1.1, 60, 2),
-  zone('ที่ลุ่มเขาพนม', 'Ao Luek', 'moderate', pointOnEdge('e4', 0.5), 2.0, 1.0, 40, 3),
-  zone('ริมแม่น้ำกระบี่', 'Mueang Krabi', 'high', [98.913, 8.065], 1.9, 1.0, 0, 4),
-  zone('พื้นที่ชุ่มน้ำหนองทะเล', 'Mueang Krabi', 'moderate', [98.915, 8.118], 1.5, 0.9, 80, 5),
-  zone('ที่ราบคลองพน', 'Mueang Krabi', 'moderate', pointOnEdge('e15', 0.5), 1.6, 0.9, 50, 6),
-  zone('ชุมชนคลองท่อม', 'Khlong Thom', 'high', [99.165, 7.934], 2.6, 1.5, 30, 7),
+  zone('ลุ่มน้ำระโนด – ทะเลสาบสงขลา', 'Ranot', 'high', [100.328, 7.76], 3.0, 1.5, 15, 1),
+  zone('พื้นที่ลุ่มคลองแห – หาดใหญ่', 'Hat Yai', 'high', [100.471, 7.042], 2.4, 1.3, 45, 2),
+  zone('ริมคลองอู่ตะเภา – บ้านพรุ', 'Hat Yai', 'high', [100.468, 6.955], 2.2, 1.2, 70, 3),
+  zone('ย่านเมืองเก่า – ท่าเรือสงขลา', 'Mueang Songkhla', 'moderate', [100.59, 7.195], 1.7, 1.0, 10, 4),
+  zone('ที่ราบลุ่มคลองแงะ – สะเดา', 'Sadao', 'high', [100.427, 6.762], 2.1, 1.1, 35, 5),
+  zone('ที่ราบควนเนียง', 'Hat Yai', 'moderate', [100.36, 7.18], 1.8, 1.0, 50, 6),
 ];
 
 /* ------------------------------------------------------------------ */
 /* ทีมกู้ภัยและอุปกรณ์                                                  */
 /* ------------------------------------------------------------------ */
 export const TEAMS: Team[] = [
-  { id: 't1', name: 'มูลนิธิกู้ภัยกระบี่', base: 'เมืองกระบี่', lng: 98.908, lat: 8.083, members: 12, skills: ['boat', 'medical', 'vehicle'], status: 'available' },
-  { id: 't2', name: 'หน่วยกาชาดคลองท่อม', base: 'คลองท่อม', lng: 99.162, lat: 7.935, members: 7, skills: ['boat', 'medical'], status: 'busy' },
-  { id: 't3', name: 'ชุดเรืออาสาอ่าวลึก', base: 'อ่าวลึก', lng: 98.766, lat: 8.383, members: 8, skills: ['boat', 'swiftwater'], status: 'available' },
-  { id: 't4', name: 'หน่วยกู้ภัยเทศบาลพลายพระยา (อปพร.)', base: 'พลายพระยา', lng: 98.701, lat: 8.452, members: 10, skills: ['vehicle', 'logistics', 'boat'], status: 'available' },
-  { id: 't5', name: 'กองร้อยทหารช่าง รถ 6 ล้อ', base: 'เมืองกระบี่', lng: 98.94, lat: 8.095, members: 14, skills: ['vehicle', 'logistics'], status: 'available' },
-  { id: 't6', name: 'ชุดกู้ภัยกระแสน้ำเชี่ยว กรมเจ้าท่า', base: 'ท่าเรือกระบี่', lng: 98.915, lat: 8.064, members: 6, skills: ['swiftwater', 'boat'], status: 'available' },
-  { id: 't7', name: 'หน่วยแพทย์ฉุกเฉิน รพ.กระบี่', base: 'เมืองกระบี่', lng: 98.915, lat: 8.09, members: 6, skills: ['medical'], status: 'available' },
-  { id: 't8', name: 'อาสาสมัครแจกอาหารและน้ำดื่ม', base: 'เมืองกระบี่', lng: 98.9, lat: 8.1, members: 20, skills: ['logistics'], status: 'available' },
+  { id: 't1', name: 'มูลนิธิมิตรภาพสามัคคี (ท่งเซียเซี่ยงตึ๊ง)', base: 'หาดใหญ่', lng: 100.476, lat: 7.012, members: 14, skills: ['boat', 'medical', 'vehicle'], status: 'available' },
+  { id: 't2', name: 'กู้ภัยเทศบาลนครหาดใหญ่', base: 'หาดใหญ่', lng: 100.469, lat: 7.005, members: 10, skills: ['boat', 'swiftwater'], status: 'busy' },
+  { id: 't3', name: 'ชุดเรืออาสาสงขลา – สิงหนคร', base: 'เมืองสงขลา', lng: 100.592, lat: 7.191, members: 8, skills: ['boat', 'swiftwater'], status: 'available' },
+  { id: 't4', name: 'หน่วยกู้ภัย อปพร. ระโนด', base: 'ระโนด', lng: 100.324, lat: 7.775, members: 10, skills: ['vehicle', 'logistics', 'boat'], status: 'available' },
+  { id: 't5', name: 'กองพลพัฒนาที่ 4 รถ 6 ล้อ', base: 'คอหงส์ หาดใหญ่', lng: 100.506, lat: 7.022, members: 16, skills: ['vehicle', 'logistics'], status: 'available' },
+  { id: 't6', name: 'ทีมกู้ภัยคลองแงะ – สะเดา', base: 'สะเดา', lng: 100.422, lat: 6.64, members: 8, skills: ['boat', 'vehicle'], status: 'available' },
+  { id: 't7', name: 'หน่วยแพทย์ฉุกเฉิน รพ.สงขลานครินทร์', base: 'หาดใหญ่', lng: 100.495, lat: 7.007, members: 6, skills: ['medical'], status: 'available' },
+  { id: 't8', name: 'อาสาสมัครแจกอาหารและน้ำดื่ม สงขลา', base: 'เมืองสงขลา', lng: 100.59, lat: 7.185, members: 20, skills: ['logistics'], status: 'available' },
 ];
 
 export const INITIAL_EQUIPMENT: EquipmentStock[] = [
@@ -197,22 +192,22 @@ const inc = (
 };
 
 export const INITIAL_INCIDENTS: Incident[] = [
-  inc('i101', 'คุณสมชาย', 'บ้านคลองหิน อ.พลายพระยา', 'Plai Phraya', 'e1', 0.6, [0.002, 0.001], 95, 'blocked', ['boat', 'elderly', 'medical'], ['strong_current'], 5, 'pending', 6, 'คุณยายติดเตียงอยู่ชั้นล่าง น้ำขึ้นเร็วมาก'),
-  inc('i102', 'คุณมาลี', 'บ้านอ่าวลึกใต้ อ.อ่าวลึก', 'Ao Luek', 'e3', 0.45, [-0.002, 0.002], 110, 'blocked', ['boat', 'life_jackets', 'food_water'], [], 9, 'pending', 14, 'อยู่บนชั้นสอง 9 คน ยังไม่ได้กินข้าวตั้งแต่เมื่อวาน'),
-  inc('i103', 'คุณประสิทธิ์', 'ชุมชนท่าเรือกระบี่', 'Mueang Krabi', 'e8', 0.55, [0.001, -0.002], 65, 'blocked', ['boat', 'elderly'], ['power_outage'], 4, 'pending', 22),
-  inc('i104', 'คุณน้อย', 'ตลาดคลองท่อม', 'Khlong Thom', 'e18', 0.5, [0.002, 0.001], 78, 'blocked', ['boat', 'medical'], [], 3, 'dispatched', 40, 'ผู้ป่วยเบาหวาน ต้องการอินซูลิน', {
+  inc('i101', 'คุณสมชาย', 'ชุมชนคลองแห อ.หาดใหญ่', 'Hat Yai', 'e8', 0.65, [0.002, 0.001], 95, 'blocked', ['boat', 'elderly', 'medical'], ['strong_current'], 5, 'pending', 6, 'คุณยายติดเตียงอยู่ชั้นล่าง น้ำคลองอู่ตะเภาเอ่อขึ้นเร็วมาก'),
+  inc('i102', 'คุณมาลี', 'บ้านท่าบอน อ.ระโนด', 'Ranot', 'e1', 0.55, [-0.002, 0.002], 110, 'blocked', ['boat', 'life_jackets', 'food_water'], [], 9, 'pending', 14, 'อยู่บนชั้นสอง 9 คน น้ำล้อมรอบออกไม่ได้'),
+  inc('i103', 'คุณประสิทธิ์', 'ย่านเมืองเก่า ถนนนครนอก', 'Mueang Songkhla', 'e4', 0.35, [0.001, -0.002], 62, 'blocked', ['boat', 'elderly'], ['power_outage'], 4, 'pending', 22),
+  inc('i104', 'คุณน้อย', 'ตลาดคลองแงะ อ.สะเดา', 'Sadao', 'e16', 0.7, [0.002, 0.001], 78, 'blocked', ['boat', 'medical'], [], 3, 'dispatched', 40, 'ผู้ป่วยเบาหวาน ต้องการอินซูลินด่วน', {
     assignedTeamIds: ['t2'],
     assignedEquipment: { boat: 1, life_jacket: 4, medic_kit: 1 },
     dispatchedAt: NOW - 28 * MIN,
   }),
-  inc('i105', 'คุณอรุณ', 'บ้านคลองพน', 'Mueang Krabi', 'e15', 0.45, [0.001, 0.002], 44, 'blocked', ['food_water', 'elderly'], [], 6, 'pending', 55),
-  inc('i106', 'คุณวิภา', 'บ้านหนองทะเล', 'Mueang Krabi', 'e6', 0.45, [-0.001, 0.001], 30, 'pickup_only', ['food_water'], [], 2, 'pending', 70),
-  inc('i107', 'คุณบุญมี', 'เทศบาลพลายพระยา', 'Plai Phraya', 'e21', 0.15, [0.001, 0.001], 52, 'blocked', ['life_jackets', 'medical'], [], 3, 'rescued', 190, undefined, {
+  inc('i105', 'คุณอรุณ', 'เทศบาลเมืองบ้านพรุ อ.หาดใหญ่', 'Hat Yai', 'e13', 0.6, [0.001, 0.002], 46, 'blocked', ['food_water', 'elderly'], [], 6, 'pending', 55),
+  inc('i106', 'คุณวิภา', 'บ้านน้ำน้อย อ.หาดใหญ่', 'Hat Yai', 'e6', 0.45, [-0.001, 0.001], 30, 'pickup_only', ['food_water'], [], 2, 'pending', 70),
+  inc('i107', 'คุณบุญมี', 'ตลาดระโนด อ.ระโนด', 'Ranot', 'e1', 0.2, [0.001, 0.001], 52, 'blocked', ['life_jackets', 'medical'], [], 3, 'rescued', 190, undefined, {
     assignedTeamIds: ['t4'],
     dispatchedAt: NOW - 170 * MIN,
     rescuedAt: NOW - 120 * MIN,
   }),
-  inc('i108', 'คุณเล็ก', 'วัดอ่าวลึก', 'Ao Luek', 'e3', 0.85, [0.001, -0.001], 28, 'pickup_only', ['elderly'], [], 1, 'rescued', 300, undefined, {
+  inc('i108', 'คุณเล็ก', 'แยกสำโรง อ.เมืองสงขลา', 'Mueang Songkhla', 'e22', 0.8, [0.001, -0.001], 28, 'pickup_only', ['elderly'], [], 1, 'rescued', 300, undefined, {
     assignedTeamIds: ['t3'],
     dispatchedAt: NOW - 280 * MIN,
     rescuedAt: NOW - 240 * MIN,
@@ -223,29 +218,23 @@ export const INITIAL_INCIDENTS: Incident[] = [
 /* สถานที่สำหรับค้นหาปลายทาง (alias = ชื่อภาษาอังกฤษ ใช้ค้นหา)           */
 /* ------------------------------------------------------------------ */
 export const PLACES: Place[] = [
-  { id: 'p1', name: 'โรงพยาบาลกระบี่', alias: 'Krabi Hospital', district: 'Mueang Krabi', lng: 98.914908, lat: 8.07635, kind: 'hospital' },
-  { id: 'p2', name: 'ตัวเมืองกระบี่', alias: 'Krabi Town', district: 'Mueang Krabi', lng: 98.9063, lat: 8.0863, kind: 'town' },
-  { id: 'p3', name: 'ท่าอากาศยานกระบี่', alias: 'Krabi Airport', district: 'Mueang Krabi', lng: 98.986, lat: 8.099, kind: 'transport' },
-  { id: 'p4', name: 'ท่าเรือเจ้าฟ้า', alias: 'Chao Fah Pier', district: 'Mueang Krabi', lng: 98.915, lat: 8.062, kind: 'transport' },
-  { id: 'p5', name: 'สนามกีฬากระบี่ (ศูนย์พักพิง)', alias: 'Krabi Stadium shelter', district: 'Mueang Krabi', lng: 98.952, lat: 8.1, kind: 'shelter' },
-  { id: 'p6', name: 'โรงพยาบาลอ่าวลึก', alias: 'Ao Luek Hospital', district: 'Ao Luek', lng: 98.766, lat: 8.381, kind: 'hospital' },
-  { id: 'p7', name: 'เทศบาลอ่าวลึก (ศูนย์พักพิง)', alias: 'Ao Luek Municipality shelter', district: 'Ao Luek', lng: 98.762, lat: 8.379, kind: 'shelter' },
-  { id: 'p8', name: 'ตลาดเขาพนม', alias: 'Khao Phanom Market', district: 'Ao Luek', lng: 98.885, lat: 8.225, kind: 'market' },
-  { id: 'p9', name: 'โรงพยาบาลพลายพระยา', alias: 'Plai Phraya Hospital', district: 'Plai Phraya', lng: 98.701, lat: 8.451, kind: 'hospital' },
-  { id: 'p10', name: 'โรงเรียนพลายพระยา (ศูนย์พักพิง)', alias: 'Plai Phraya School shelter', district: 'Plai Phraya', lng: 98.735, lat: 8.415, kind: 'shelter' },
-  { id: 'p11', name: 'โรงพยาบาลคลองท่อม', alias: 'Khlong Thom Hospital', district: 'Khlong Thom', lng: 99.165, lat: 7.934, kind: 'hospital' },
-  { id: 'p12', name: 'ตลาดคลองท่อม', alias: 'Khlong Thom Market', district: 'Khlong Thom', lng: 99.167, lat: 7.932, kind: 'market' },
-  { id: 'p13', name: 'วัดคลองท่อม (ศูนย์พักพิง)', alias: 'Khlong Thom Temple shelter', district: 'Khlong Thom', lng: 99.2, lat: 7.88, kind: 'shelter' },
-  { id: 'p14', name: 'ชุมชนเหนือคลอง', alias: 'Nuea Khlong', district: 'Mueang Krabi', lng: 99.05, lat: 8.12, kind: 'town' },
-  // Additional Popular POIs for free offline matching
-  { id: 'poi1', name: 'โลตัส กระบี่ (Lotus\'s)', alias: 'Lotus Krabi โลตัสกระบี่', district: 'Mueang Krabi', lng: 98.93885, lat: 8.10923, kind: 'market' },
-  { id: 'poi2', name: 'บิ๊กซี กระบี่ (Big C)', alias: 'Big C Krabi บิ๊กซีกระบี่', district: 'Mueang Krabi', lng: 98.93111, lat: 8.10111, kind: 'market' },
-  { id: 'poi3', name: 'แม็คโคร กระบี่ (Makro)', alias: 'Makro Krabi แม็คโครกระบี่', district: 'Mueang Krabi', lng: 98.94888, lat: 8.11888, kind: 'market' },
-  { id: 'poi4', name: 'โฮมโปร กระบี่ (HomePro)', alias: 'Home Pro Krabi โฮมโปรกระบี่', district: 'Mueang Krabi', lng: 98.9270, lat: 8.1009, kind: 'market' },
-  { id: 'poi5', name: 'หาดอ่าวนาง', alias: 'Ao Nang Beach อ่าวนาง', district: 'Mueang Krabi', lng: 98.8188, lat: 8.0305, kind: 'town' },
-  { id: 'poi6', name: 'หาดนพรัตน์ธารา', alias: 'Noppharat Thara Beach', district: 'Mueang Krabi', lng: 98.8000, lat: 8.0400, kind: 'town' },
-  { id: 'poi7', name: 'วัดถ้ำเสือ', alias: 'Tiger Cave Temple วัดถ้ำเสือ', district: 'Mueang Krabi', lng: 98.9248, lat: 8.1243, kind: 'town' },
-  { id: 'poi8', name: 'สระมรกต', alias: 'Emerald Pool สระมรกต', district: 'Khlong Thom', lng: 99.2604, lat: 7.9229, kind: 'town' },
-  { id: 'poi9', name: 'น้ำตกร้อน', alias: 'Hot Stream น้ำตกร้อน', district: 'Khlong Thom', lng: 99.2063, lat: 7.9351, kind: 'town' },
-  { id: 'poi10', name: 'ศาลากลางจังหวัดกระบี่', alias: 'Krabi City Hall ศาลากลาง', district: 'Mueang Krabi', lng: 98.918, lat: 8.058, kind: 'town' },
+  { id: 'p1', name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', alias: 'PSU Hospital Hat Yai มอ', district: 'Hat Yai', lng: 100.4954, lat: 7.0074, kind: 'hospital' },
+  { id: 'p2', name: 'โรงพยาบาลหาดใหญ่', alias: 'Hat Yai Hospital', district: 'Hat Yai', lng: 100.4712, lat: 7.0112, kind: 'hospital' },
+  { id: 'p3', name: 'ตัวเมืองหาดใหญ่ (ตลาดกิมหยง)', alias: 'Hat Yai Kim Yong Market', district: 'Hat Yai', lng: 100.4747, lat: 7.0084, kind: 'town' },
+  { id: 'p4', name: 'ท่าอากาศยานนานาชาติหาดใหญ่', alias: 'Hat Yai Airport', district: 'Hat Yai', lng: 100.3929, lat: 6.9332, kind: 'transport' },
+  { id: 'p5', name: 'ศูนย์ประชุมนานาชาติ ม.อ. (ศูนย์พักพิง)', alias: 'PSU ICC Hat Yai shelter', district: 'Hat Yai', lng: 100.4986, lat: 7.0061, kind: 'shelter' },
+  { id: 'p6', name: 'โรงพยาบาลสงขลา', alias: 'Songkhla Hospital', district: 'Mueang Songkhla', lng: 100.5944, lat: 7.1319, kind: 'hospital' },
+  { id: 'p7', name: 'สนามกีฬาติณสูลานนท์ (ศูนย์พักพิง)', alias: 'Tinsulanon Stadium Songkhla shelter', district: 'Mueang Songkhla', lng: 100.5968, lat: 7.1972, kind: 'shelter' },
+  { id: 'p8', name: 'ศาลากลางจังหวัดสงขลา', alias: 'Songkhla City Hall ศาลากลาง', district: 'Mueang Songkhla', lng: 100.5951, lat: 7.1898, kind: 'town' },
+  { id: 'p9', name: 'หาดสมิหลา', alias: 'Samila Beach สมิหลา', district: 'Mueang Songkhla', lng: 100.5975, lat: 7.2116, kind: 'town' },
+  { id: 'p10', name: 'เกาะยอ', alias: 'Koh Yo เกาะยอ', district: 'Mueang Songkhla', lng: 100.542, lat: 7.163, kind: 'town' },
+  { id: 'p11', name: 'โรงพยาบาลสะเดา', alias: 'Sadao Hospital', district: 'Sadao', lng: 100.422, lat: 6.639, kind: 'hospital' },
+  { id: 'p12', name: 'โรงเรียนสะเดาขรรค์ชัย (ศูนย์พักพิง)', alias: 'Sadao School shelter', district: 'Sadao', lng: 100.419, lat: 6.635, kind: 'shelter' },
+  { id: 'p13', name: 'ด่านศุลกากรสะเดา (ด่านนอก)', alias: 'Sadao Border Dan Nok', district: 'Sadao', lng: 100.418, lat: 6.526, kind: 'transport' },
+  { id: 'p14', name: 'โรงพยาบาลระโนด', alias: 'Ranot Hospital', district: 'Ranot', lng: 100.323, lat: 7.779, kind: 'hospital' },
+  { id: 'p15', name: 'เทศบาลตำบลระโนด (ศูนย์พักพิง)', alias: 'Ranot Municipality shelter', district: 'Ranot', lng: 100.321, lat: 7.775, kind: 'shelter' },
+  { id: 'poi1', name: 'เซ็นทรัล หาดใหญ่ (Central Hat Yai)', alias: 'Central Festival Hat Yai เซ็นทรัล', district: 'Hat Yai', lng: 100.4819, lat: 6.9936, kind: 'market' },
+  { id: 'poi2', name: 'โลตัส หาดใหญ่ (Lotus\'s)', alias: 'Lotus Hat Yai โลตัสหาดใหญ่', district: 'Hat Yai', lng: 100.4943, lat: 7.0018, kind: 'market' },
+  { id: 'poi3', name: 'บิ๊กซี หาดใหญ่ (Big C)', alias: 'Big C Hat Yai บิ๊กซีหาดใหญ่', district: 'Hat Yai', lng: 100.4792, lat: 6.9965, kind: 'market' },
+  { id: 'poi4', name: 'สถานีขนส่งผู้โดยสารหาดใหญ่', alias: 'Hat Yai Bus Terminal บขส', district: 'Hat Yai', lng: 100.4836, lat: 6.9927, kind: 'transport' },
 ];
