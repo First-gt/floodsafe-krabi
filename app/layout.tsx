@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Prompt } from 'next/font/google';
 import './globals.css';
+import { CommitteeTour } from '@/components/CommitteeTour';
 import { FloodStoreProvider } from '@/lib/store';
 
 const prompt = Prompt({
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="th" className={`${prompt.variable} ${inter.variable}`}>
       <body className="bg-navy-950 font-sans text-slate-200 antialiased">
-        <FloodStoreProvider>{children}</FloodStoreProvider>
+        <FloodStoreProvider>
+          {children}
+          <CommitteeTour />
+        </FloodStoreProvider>
       </body>
     </html>
   );

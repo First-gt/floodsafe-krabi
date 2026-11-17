@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, GraduationCap, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
-import { CommitteeTour, type TourStepId } from '@/components/CommitteeTour';
+import { TOUR_STEPS } from '@/components/CommitteeTour';
 import { DepthLegend } from '@/components/DepthLegend';
 import { HotlineSheet } from '@/components/HotlineSheet';
 import { FloodMap } from '@/components/MapView';
@@ -24,11 +24,10 @@ import { cn } from '@/lib/utils';
 const OFF_ROUTE_M = 150;
 
 export default function CitizenPage() {
-  const { checkpoints, zones, seedDemoData, clearDemoData } = useFloodStore();
+  const { checkpoints, zones, tourActive, tourStepIdx, startTour } = useFloodStore();
   const gps = useGeolocation();
 
-  const [tourActive, setTourActive] = useState(false);
-  const [tourStep, setTourStep] = useState<TourStepId>('intro');
+  const tourStep = TOUR_STEPS[tourStepIdx]?.id ?? 'intro';
   const [mode, setMode] = useState<'choose' | 'route'>('choose');
   const [vehicle, setVehicle] = useState<VehicleProfile | null>(null);
   const [vehicleReady, setVehicleReady] = useState(false);
@@ -48,61 +47,32 @@ export default function CitizenPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [padding, setPadding] = useState({ top: 80, bottom: 120, left: 60, right: 60 });
 
-  // เปิดโหมดสาธิตสำหรับกรรมการ ม.อ. อัตโนมัติเมื่อเข้าครั้งแรก หรือเปิดด้วยลิงก์ ?demo=1 / ?judge=1
+  // ซิงก์สถานะหน้าแผนที่ตามขั้นของโหมดสาธิต
   useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const forceDemo = params.get('demo') === '1' || params.get('judge') === '1';
-      if (forceDemo || localStorage.getItem('floodsafe.tour.v1') !== '1') {
-        setTourActive(true);
-      }
-    } catch {
-      /* ignore */
+    if (!tourActive) {
+      setMode('choose');
+      setDestination(null);
+      return;
     }
-  }, []);
-
-  const handleTourStep = useCallback(
-    (step: TourStepId) => {
-      setTourStep(step);
-      if (step === 'intro') {
-        clearDemoData();
-        setMode('choose');
-        setDestination(null);
-        setFlyTo({ center: SONGKLA_CENTER, zoom: 9.4, key: Date.now() });
-      } else if (step === 'report') {
-        seedDemoData('report');
-        setMode('choose');
-        setDestination(null);
-        setFlyTo({ center: [100.485, 7.022], zoom: 12.6, key: Date.now() });
-      } else if (step === 'route') {
-        setMode('route');
-        setVehicle(defaultProfile('sedan', 'รถเก๋ง (สาธิต)'));
-        setUseDemo(true);
-        setDestination({ name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', coord: [100.4954, 7.0074] });
-      } else if (step === 'dashboard') {
-        seedDemoData('all');
-        setFlyTo({ center: SONGKLA_CENTER, zoom: 9.3, key: Date.now() });
-      } else if (step === 'ready') {
-        setMode('choose');
-        setDestination(null);
-      }
-    },
-    [clearDemoData, seedDemoData],
-  );
-
-  const handleTourFinish = useCallback(() => {
-    try {
-      localStorage.setItem('floodsafe.tour.v1', '1');
-      if (window.location.search) {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    } catch {
-      /* ignore */
+    const step = TOUR_STEPS[tourStepIdx]?.id;
+    if (step === 'intro') {
+      setMode('choose');
+      setDestination(null);
+      setFlyTo({ center: SONGKLA_CENTER, zoom: 9.4, key: Date.now() });
+    } else if (step === 'report') {
+      setMode('choose');
+      setDestination(null);
+      setFlyTo({ center: [100.485, 7.022], zoom: 12.6, key: Date.now() });
+    } else if (step === 'route') {
+      setMode('route');
+      setVehicle(defaultProfile('sedan', 'รถเก๋ง (สาธิต)'));
+      setUseDemo(true);
+      setDestination({ name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', coord: [100.4954, 7.0074] });
+    } else if (step === 'ready') {
+      setMode('choose');
+      setDestination(null);
     }
-    setTourActive(false);
-    setMode('choose');
-    setDestination(null);
-  }, []);
+  }, [tourActive, tourStepIdx]);
 
   // โหลดข้อมูลรถที่เคยบันทึกไว้ (ไม่บังคับเปิด modal ทับหน้าจอ ให้เลือกแบบแตะครั้งเดียวในแผงหลักได้)
   useEffect(() => {
@@ -466,7 +436,7 @@ export default function CitizenPage() {
                 <Layers size={16} />
               </ToolBtn>
               {!tourActive && (
-                <ToolBtn label="สาธิตวิธีใช้" onClick={() => setTourActive(true)}>
+                <ToolBtn label="สาธิตวิธีใช้" onClick={startTour}>
                   <GraduationCap size={16} className="text-ocean-300" />
                 </ToolBtn>
               )}
@@ -518,7 +488,6 @@ export default function CitizenPage() {
       />
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} gps={gps} />
       {hotlineOpen && <HotlineSheet onClose={() => setHotlineOpen(false)} />}
-      <CommitteeTour active={tourActive} onStepChange={handleTourStep} onFinish={handleTourFinish} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
 import { analyzeIncident } from './ai-engine';
 import { FLOOD_ZONES, INITIAL_CHECKPOINTS, INITIAL_EQUIPMENT, INITIAL_INCIDENTS, TEAMS } from './mock-data';
 import { nearestNode } from './road-network';
@@ -152,6 +152,11 @@ interface Store extends State {
   seedDemoData: (stage: 'report' | 'all') => void;
   clearDemoData: () => void;
   setLive: (v: boolean) => void;
+  tourActive: boolean;
+  tourStepIdx: number;
+  startTour: () => void;
+  setTourStepIdx: (idx: number) => void;
+  finishTour: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -166,18 +171,41 @@ export function FloodStoreProvider({ children }: { children: ReactNode }) {
     live: true,
     lastUpdate: null,
   });
+  const [tourActive, setTourActive] = useState(false);
+  const [tourStepIdx, setTourStepIdx] = useState(0);
 
-  // หากเคยดูสาธิตจบแล้ว (และไม่ได้เปิดด้วย ?demo=1) ให้โหลดข้อมูลสาธิตไว้พร้อมทดสอบ
+  // เปิดโหมดสาธิตอัตโนมัติเมื่อเข้าครั้งแรก หรือเปิดด้วย ?demo=1 / ?judge=1
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const forceDemo = params.get('demo') === '1' || params.get('judge') === '1';
-      if (!forceDemo && localStorage.getItem('floodsafe.tour.v1') === '1') {
+      if (forceDemo || localStorage.getItem('floodsafe.tour.v1') !== '1') {
+        setTourStepIdx(0);
+        setTourActive(true);
+      } else {
         dispatch({ type: 'seed', stage: 'all' });
       }
     } catch {
       /* ignore */
     }
+  }, []);
+
+  const startTour = useCallback(() => {
+    setTourStepIdx(0);
+    setTourActive(true);
+  }, []);
+
+  const finishTour = useCallback(() => {
+    try {
+      localStorage.setItem('floodsafe.tour.v1', '1');
+      if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } catch {
+      /* ignore */
+    }
+    setTourActive(false);
+    setTourStepIdx(0);
   }, []);
 
   // Simulated real-time feed: every few seconds a random checkpoint's depth drifts by a few cm.
@@ -251,8 +279,13 @@ export function FloodStoreProvider({ children }: { children: ReactNode }) {
       seedDemoData: (stage) => dispatch({ type: 'seed', stage }),
       clearDemoData: () => dispatch({ type: 'clear' }),
       setLive: (v) => dispatch({ type: 'live', value: v }),
+      tourActive,
+      tourStepIdx,
+      startTour,
+      setTourStepIdx,
+      finishTour,
     }),
-    [state, addReport],
+    [state, addReport, tourActive, tourStepIdx, startTour, finishTour],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

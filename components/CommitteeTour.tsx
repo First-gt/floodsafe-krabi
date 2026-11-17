@@ -1,18 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, Brain, CheckCircle2, GraduationCap, Lock, MapPin, Navigation, ShieldAlert } from 'lucide-react';
+import { useFloodStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 export type TourStepId = 'intro' | 'report' | 'route' | 'dashboard' | 'ready';
 
-interface Props {
-  active: boolean;
-  onStepChange: (step: TourStepId) => void;
-  onFinish: () => void;
-}
-
-const STEPS: {
+export const TOUR_STEPS: {
   id: TourStepId;
   title: string;
   subtitle: string;
@@ -57,9 +53,9 @@ const STEPS: {
   {
     id: 'dashboard',
     title: '4. ศูนย์กู้ภัย & AI จัดทีมช่วยเหลือ',
-    subtitle: 'เติมข้อมูลจำลองครบ 4 อำเภอในสงขลาแล้ว',
-    body: 'เจ้าหน้าที่กู้ภัยสามารถกดแท็บ "ศูนย์กู้ภัย" ด้านบน เพื่อดูเคสเร่งด่วน เลือกทีมที่ใกล้ที่สุด และติดตามสถานะจนช่วยเหลือเสร็จ',
-    logic: 'หลักการจัดลำดับ: ระบบให้คะแนนความเร่งด่วน (0–100) จากระดับน้ำ, ผู้สูงอายุ/ผู้ป่วย, กระแสน้ำเชี่ยว และแนะนำอุปกรณ์ตามสต็อกที่มี',
+    subtitle: 'กำลังแสดงหน้าศูนย์กู้ภัย (/dashboard) พร้อมข้อมูลทั้ง 4 อำเภอ',
+    body: 'เจ้าหน้าที่กู้ภัยใช้หน้านี้ดูเคสเร่งด่วน (เรียงตามระดับวิกฤต) กดเลือกเคสเพื่อดูทีม/อุปกรณ์ที่ AI แนะนำ และกดส่งทีมช่วยเหลือได้ทันที',
+    logic: 'หลักการจัดลำดับ: ระบบให้คะแนนความเร่งด่วน (0–100) จากระดับน้ำ, ผู้สูงอายุ/ผู้ป่วย, กระแสน้ำเชี่ยว และจับคู่ทีม/อุปกรณ์ตามสต็อกที่มี',
     icon: Brain,
   },
   {
@@ -79,24 +75,37 @@ const CHIP_TONE = {
   ocean: 'bg-ocean-500/15 text-ocean-200 border-ocean-400/30',
 } as const;
 
-export function CommitteeTour({ active, onStepChange, onFinish }: Props) {
-  const [idx, setIdx] = useState(0);
+export function CommitteeTour() {
+  const { tourActive, tourStepIdx, setTourStepIdx, finishTour, seedDemoData, clearDemoData } = useFloodStore();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!active) return;
-    setIdx(0);
-  }, [active]);
+    if (!tourActive) return;
+    const stepId = TOUR_STEPS[tourStepIdx]?.id;
+    if (stepId === 'intro') {
+      clearDemoData();
+      if (pathname !== '/') router.push('/');
+    } else if (stepId === 'report') {
+      seedDemoData('report');
+      if (pathname !== '/') router.push('/');
+    } else if (stepId === 'route') {
+      seedDemoData('report');
+      if (pathname !== '/') router.push('/');
+    } else if (stepId === 'dashboard') {
+      seedDemoData('all');
+      if (pathname !== '/dashboard') router.push('/dashboard');
+    } else if (stepId === 'ready') {
+      seedDemoData('all');
+      if (pathname !== '/') router.push('/');
+    }
+  }, [tourActive, tourStepIdx, pathname, router, clearDemoData, seedDemoData]);
 
-  useEffect(() => {
-    if (!active) return;
-    onStepChange(STEPS[idx].id);
-  }, [active, idx, onStepChange]);
+  if (!tourActive) return null;
 
-  if (!active) return null;
-
-  const step = STEPS[idx];
+  const step = TOUR_STEPS[tourStepIdx] ?? TOUR_STEPS[0];
   const Icon = step.icon;
-  const isLast = idx === STEPS.length - 1;
+  const isLast = tourStepIdx === TOUR_STEPS.length - 1;
 
   return (
     <aside
@@ -106,13 +115,13 @@ export function CommitteeTour({ active, onStepChange, onFinish }: Props) {
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-ocean-500/15 px-2.5 py-1 text-[11px] font-semibold text-ocean-300">
-          <Lock size={11} /> สาธิตสำหรับกรรมการ ม.อ. ({idx + 1}/{STEPS.length})
+          <Lock size={11} /> สาธิตสำหรับกรรมการ ม.อ. ({tourStepIdx + 1}/{TOUR_STEPS.length})
         </span>
         <div className="flex gap-1">
-          {STEPS.map((s, i) => (
+          {TOUR_STEPS.map((s, i) => (
             <span
               key={s.id}
-              className={cn('h-1.5 w-5 rounded-full transition-colors', i <= idx ? 'bg-ocean-400' : 'bg-white/15')}
+              className={cn('h-1.5 w-5 rounded-full transition-colors', i <= tourStepIdx ? 'bg-ocean-400' : 'bg-white/15')}
             />
           ))}
         </div>
@@ -151,9 +160,9 @@ export function CommitteeTour({ active, onStepChange, onFinish }: Props) {
           type="button"
           onClick={() => {
             if (isLast) {
-              onFinish();
+              finishTour();
             } else {
-              setIdx((i) => i + 1);
+              setTourStepIdx(tourStepIdx + 1);
             }
           }}
           className="btn-primary w-full justify-center text-sm"
