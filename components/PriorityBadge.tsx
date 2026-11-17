@@ -1,20 +1,30 @@
-import { AlertOctagon, AlertTriangle, Info } from 'lucide-react';
+import { AlertOctagon } from 'lucide-react';
 import type { Priority } from '@/lib/types';
-import { PRIORITY_META, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export function PriorityBadge({ priority, className }: { priority: Priority; className?: string }) {
-  const m = PRIORITY_META[priority];
-  const Icon = priority === 'critical' ? AlertOctagon : priority === 'urgent' ? AlertTriangle : Info;
+  if (priority === 'critical') {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 rounded-full bg-danger/15 px-2.5 py-0.5 text-xs font-semibold text-red-300',
+          className,
+        )}
+      >
+        <AlertOctagon size={12} />
+        วิกฤต
+      </span>
+    );
+  }
+
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-        m.cls,
+        'inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-300',
         className,
       )}
     >
-      <Icon size={12} />
-      {m.label}
+      {priority === 'urgent' ? 'เร่งด่วน' : 'ปานกลาง'}
     </span>
   );
 }

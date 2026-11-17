@@ -4,21 +4,14 @@ import { useMemo, useState } from 'react';
 import { AlertTriangle, Check, Clock, Handshake, MapPin, Minus, Plus, Send, ShieldCheck, Timer, Undo2, Users } from 'lucide-react';
 import { EQUIPMENT_CATALOG } from '@/lib/ai-engine';
 import { autoSelectTeams, suggestTeams } from '@/lib/dispatch';
-import { DISTRICT_TH, NEED_LABEL, SKILL_LABEL, STATUS_LABEL } from '@/lib/labels';
+import { DISTRICT_TH, NEED_LABEL, SKILL_LABEL } from '@/lib/labels';
 import { useFloodStore } from '@/lib/store';
-import type { Incident, IncidentStatus } from '@/lib/types';
-import { DEPTH_COLORS, PRIORITY_META, cn, depthLevel } from '@/lib/utils';
+import type { Incident } from '@/lib/types';
+import { cn } from '@/lib/utils';
 import { AiRecommendationCard } from './AiRecommendationCard';
 import { EQUIPMENT_ICONS, FALLBACK_ICON } from './equipment-icons';
-import { PriorityBadge } from './PriorityBadge';
 import { REFERRAL_STATUS_LABEL, REFERRAL_STATUS_STYLE, ReferralPanel, referralAgencyName } from './ReferralPanel';
 import { TimeAgo } from './TimeAgo';
-
-const STATUS_STYLE: Record<IncidentStatus, string> = {
-  pending: 'bg-safety/15 text-yellow-300',
-  dispatched: 'bg-sky-400/15 text-sky-300',
-  rescued: 'bg-safe/15 text-green-300',
-};
 
 interface Props {
   incident: Incident;
@@ -28,26 +21,24 @@ interface Props {
 }
 
 export function IncidentCard({ incident: inc, selected, onSelect, onViewMap }: Props) {
-  const color = PRIORITY_META[inc.recommendation.priority].color;
   return (
     <article
       className={cn('rounded-2xl border transition', selected ? 'border-ocean-400/60 bg-white/[0.07]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]')}
-      style={{ borderLeft: `4px solid ${color}` }}
     >
       <button className="w-full p-3.5 text-left" onClick={onSelect} aria-expanded={selected}>
         <div className="mb-1.5 flex flex-wrap items-center gap-2">
-          <PriorityBadge priority={inc.recommendation.priority} />
-          <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', STATUS_STYLE[inc.status])}>{STATUS_LABEL[inc.status]}</span>
+          {inc.recommendation.priority === 'critical' && (
+            <span className="rounded-full bg-danger/15 px-2 py-0.5 text-[11px] font-semibold text-red-300">
+              วิกฤต
+            </span>
+          )}
           <span className="ml-auto flex items-center gap-1 text-[11px] text-slate-500">
             <Clock size={11} /> <TimeAgo ts={inc.createdAt} />
           </span>
         </div>
         <p className="text-sm font-semibold text-white">{inc.locationName}</p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
-          <span className="flex items-center gap-1">
-            <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: DEPTH_COLORS[depthLevel(inc.depthCm)] }} />
-            {inc.depthCm} ซม.
-          </span>
+          <span>น้ำสูง {inc.depthCm} ซม.</span>
           <span className="flex items-center gap-1">
             <Users size={12} /> {inc.people} คน
           </span>
@@ -59,8 +50,16 @@ export function IncidentCard({ incident: inc, selected, onSelect, onViewMap }: P
               {NEED_LABEL[n]}
             </span>
           ))}
-          {inc.hazards.includes('strong_current') && <span className="rounded-md bg-danger/20 px-1.5 py-0.5 text-[11px] text-red-300">กระแสน้ำเชี่ยว</span>}
-          {inc.hazards.includes('power_outage') && <span className="rounded-md bg-safety/20 px-1.5 py-0.5 text-[11px] text-yellow-300">ไฟฟ้าดับ</span>}
+          {inc.hazards.includes('strong_current') && (
+            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-300">
+              กระแสน้ำเชี่ยว
+            </span>
+          )}
+          {inc.hazards.includes('power_outage') && (
+            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-300">
+              ไฟฟ้าดับ
+            </span>
+          )}
         </div>
       </button>
 
@@ -85,7 +84,7 @@ function Details({ incident: inc, onViewMap }: { incident: Incident; onViewMap: 
             โทร: <b className="text-slate-200">{inc.phone}</b>
           </span>
         )}
-        <button className="ml-auto flex min-h-[36px] items-center gap-1 text-ocean-300 hover:underline" onClick={onViewMap}>
+        <button className="ml-auto flex min-h-[44px] items-center gap-1 text-ocean-300 hover:underline" onClick={onViewMap}>
           <MapPin size={13} /> ดูบนแผนที่
         </button>
       </div>
@@ -103,14 +102,11 @@ function Details({ incident: inc, onViewMap }: { incident: Incident; onViewMap: 
           {inc.photoReviews.map((r, i) => (
             <p
               key={i}
-              className={cn(
-                'flex items-start gap-1.5 rounded-lg px-2.5 py-1.5 text-xs',
-                r.status === 'verified' ? 'bg-safe/10 text-green-300' : 'bg-safety/10 text-yellow-300',
-              )}
+              className="flex items-start gap-1.5 rounded-lg bg-white/5 px-2.5 py-1.5 text-xs text-slate-300"
             >
-              <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-slate-400" />
               <span>
-                <b>รูปที่ {i + 1}: {r.status === 'verified' ? 'ตรวจสอบแล้ว' : 'รอเจ้าหน้าที่ยืนยัน'}</b> ({r.score}%{r.method === 'ai' ? ' · AI วิชัน' : ' · ตรวจเบื้องต้น'}) – {r.summary}
+                <b className="text-slate-200">รูปที่ {i + 1}: {r.status === 'verified' ? 'ตรวจสอบแล้ว' : 'รอเจ้าหน้าที่ยืนยัน'}</b> ({r.score}%{r.method === 'ai' ? ' · AI วิชัน' : ' · ตรวจเบื้องต้น'}) – {r.summary}
               </span>
             </p>
           ))}
@@ -124,7 +120,7 @@ function Details({ incident: inc, onViewMap }: { incident: Incident; onViewMap: 
           <p className="mr-auto flex items-center gap-2 text-sm font-semibold text-white">
             <Handshake size={16} className="text-ocean-300" /> ส่งต่อหน่วยงานภายนอก
           </p>
-          <button className="btn-ghost !min-h-[40px] !text-xs" onClick={() => setRefOpen(true)}>
+          <button className="btn-ghost !min-h-[44px] !text-xs" onClick={() => setRefOpen(true)}>
             <Send size={14} /> {(inc.referrals ?? []).length ? 'จัดการ' : 'เลือกหน่วยงาน'}
           </button>
         </div>
@@ -148,7 +144,7 @@ function Details({ incident: inc, onViewMap }: { incident: Incident; onViewMap: 
       {inc.status !== 'pending' && (
         <div className="rounded-2xl border border-white/10 bg-navy-950/50 p-3 text-sm">
           <p className="mb-2 flex items-center gap-2 font-semibold text-white">
-            {inc.status === 'dispatched' ? <Timer size={16} className="text-sky-300" /> : <Check size={16} className="text-safe" />}
+            {inc.status === 'dispatched' ? <Timer size={16} className="text-slate-400" /> : <Check size={16} className="text-safe" />}
             {inc.status === 'dispatched' ? 'ส่งทีมแล้ว' : 'ช่วยเหลือสำเร็จ'}
             {inc.dispatchedAt && (
               <span className="ml-auto text-xs font-normal text-slate-500">
@@ -238,7 +234,7 @@ function DispatchPanel({ incident: inc }: { incident: Incident }) {
                   {s.team.skills.map((k) => (
                     <span
                       key={k}
-                      className={cn('rounded px-1 text-[10px]', inc.recommendation.skills.includes(k) ? 'bg-safe/20 text-green-300' : 'bg-white/10 text-slate-500')}
+                      className={cn('rounded px-1 text-[10px]', inc.recommendation.skills.includes(k) ? 'bg-ocean-500/20 text-ocean-300 font-medium' : 'bg-white/10 text-slate-500')}
                     >
                       {SKILL_LABEL[k]}
                     </span>
@@ -267,11 +263,11 @@ function DispatchPanel({ incident: inc }: { incident: Incident }) {
                       ต้องการ {r.qty} · คงเหลือ {max}
                     </span>
                   </span>
-                  <button className="btn-ghost !min-h-[40px] !min-w-[40px] !px-0" onClick={() => setQty({ ...qty, [r.id]: Math.max(0, v - 1) })} aria-label="ลด">
+                  <button className="btn-ghost !min-h-[44px] !min-w-[44px] !px-0" onClick={() => setQty({ ...qty, [r.id]: Math.max(0, v - 1) })} aria-label="ลด">
                     <Minus size={14} />
                   </button>
                   <span className="w-8 text-center text-sm font-bold text-white">{v}</span>
-                  <button className="btn-ghost !min-h-[40px] !min-w-[40px] !px-0" onClick={() => setQty({ ...qty, [r.id]: Math.min(max, v + 1) })} aria-label="เพิ่ม" disabled={v >= max}>
+                  <button className="btn-ghost !min-h-[44px] !min-w-[44px] !px-0" onClick={() => setQty({ ...qty, [r.id]: Math.min(max, v + 1) })} aria-label="เพิ่ม" disabled={v >= max}>
                     <Plus size={14} />
                   </button>
                 </li>
@@ -282,7 +278,7 @@ function DispatchPanel({ incident: inc }: { incident: Incident }) {
       )}
 
       {shortage.length > 0 && (
-        <p className="mb-3 flex items-start gap-2 rounded-xl bg-safety/10 p-2.5 text-xs text-yellow-200">
+        <p className="mb-3 flex items-start gap-2 rounded-xl bg-danger/15 p-2.5 text-xs text-red-300">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           อุปกรณ์ไม่เพียงพอ: {shortage.map((s) => EQUIPMENT_CATALOG[s.id]?.label).join(', ')} – ขอสนับสนุนจากอำเภอใกล้เคียง
         </p>

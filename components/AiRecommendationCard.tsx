@@ -1,16 +1,14 @@
 import { Bot, Lightbulb } from 'lucide-react';
 import { EQUIPMENT_CATALOG } from '@/lib/ai-engine';
 import type { AiRecommendation } from '@/lib/types';
-import { PRIORITY_META, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { EQUIPMENT_ICONS, FALLBACK_ICON } from './equipment-icons';
 import { PriorityBadge } from './PriorityBadge';
 
 export function AiRecommendationCard({ rec, className }: { rec: AiRecommendation; className?: string }) {
-  const color = PRIORITY_META[rec.priority].color;
   return (
     <section
-      className={cn('rounded-2xl border bg-navy-950/60 p-4', className)}
-      style={{ borderColor: `${color}55` }}
+      className={cn('rounded-2xl border border-white/10 bg-navy-950/60 p-4', className)}
       aria-label="AI แนะนำทรัพยากรกู้ภัย"
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -24,18 +22,13 @@ export function AiRecommendationCard({ rec, className }: { rec: AiRecommendation
         <PriorityBadge priority={rec.priority} />
       </div>
 
-      <p className="mb-3 text-sm font-medium" style={{ color }}>
+      <p className="mb-3 text-sm font-medium text-slate-200">
         {rec.headline}
       </p>
 
-      <div className="mb-3">
-        <div className="mb-1 flex justify-between text-[11px] text-slate-400">
-          <span>คะแนนความเสี่ยง</span>
-          <span className="font-semibold text-slate-200">{rec.score}/100</span>
-        </div>
-        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${rec.score}%`, background: color }} />
-        </div>
+      <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
+        <span>คะแนนความเสี่ยง</span>
+        <span className="font-semibold text-slate-200">{rec.score}/100</span>
       </div>
 
       {rec.equipment.length > 0 && (
@@ -65,7 +58,7 @@ export function AiRecommendationCard({ rec, className }: { rec: AiRecommendation
         <ul className="mt-3 space-y-1.5">
           {rec.notes.map((n) => (
             <li key={n} className="flex gap-2 text-xs text-slate-300">
-              <Lightbulb size={14} className="mt-0.5 shrink-0 text-safety" />
+              <Lightbulb size={14} className="mt-0.5 shrink-0 text-slate-400" />
               {n}
             </li>
           ))}

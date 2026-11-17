@@ -19,8 +19,8 @@ export const REFERRAL_STATUS_LABEL: Record<ReferralStatus, string> = {
 };
 
 export const REFERRAL_STATUS_STYLE: Record<ReferralStatus, string> = {
-  sent: 'bg-safety/15 text-yellow-300',
-  acknowledged: 'bg-sky-400/15 text-sky-300',
+  sent: 'bg-white/10 text-slate-300',
+  acknowledged: 'bg-white/10 text-slate-300',
   on_the_way: 'bg-ocean-500/20 text-ocean-300',
   done: 'bg-safe/15 text-green-300',
 };
@@ -142,7 +142,7 @@ export function ReferralPanel({ incidentId, onClose }: Props) {
           </details>
 
           {msg && (
-            <p className={cn('flex items-start gap-2 rounded-xl p-2.5 text-xs', msg.ok ? 'bg-safe/10 text-green-300' : 'bg-safety/10 text-yellow-200')} role="status">
+            <p className={cn('flex items-start gap-2 rounded-xl p-2.5 text-xs', msg.ok ? 'bg-safe/10 text-green-300' : 'bg-danger/15 text-red-300')} role="status">
               {msg.ok ? <Check size={14} className="mt-0.5 shrink-0" /> : <ShieldCheck size={14} className="mt-0.5 shrink-0" />}
               {msg.text}
             </p>
@@ -158,8 +158,8 @@ export function ReferralPanel({ incidentId, onClose }: Props) {
                   <div className="flex flex-wrap items-center gap-1.5">
                     <p className="mr-auto text-sm font-semibold text-white">{agency.name}</p>
                     <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-300">{AGENCY_KIND_LABEL[agency.kind]}</span>
-                    {agency.hotline && <span className="rounded-full bg-safe/15 px-2 py-0.5 text-[10px] text-green-300">สายด่วนจริง</span>}
-                    {agency.mock && <span className="rounded-full bg-safety/15 px-2 py-0.5 text-[10px] text-yellow-300">ตัวอย่าง</span>}
+                    {agency.hotline && <span className="rounded-full bg-ocean-500/15 px-2 py-0.5 text-[10px] text-ocean-300">สายด่วนจริง</span>}
+                    {agency.mock && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">ตัวอย่าง</span>}
                   </div>
                   <p className="mt-1 text-xs text-slate-400">{agency.desc}</p>
                   <p className="mt-1 text-[11px] text-slate-500">

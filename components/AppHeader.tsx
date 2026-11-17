@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Navigation, Radio, Waves } from 'lucide-react';
+import { LayoutDashboard, Navigation, Waves } from 'lucide-react';
 import { useFloodStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { TimeAgo } from './TimeAgo';
@@ -19,7 +19,7 @@ export function AppHeader() {
   return (
     <header className="glass z-30 flex h-14 shrink-0 items-center gap-2 border-x-0 border-t-0 px-3 sm:gap-4 sm:px-5">
       <Link href="/" className="flex min-w-0 items-center gap-2" aria-label="FloodSafe Krabi หน้าแรก">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-ocean-400 to-blue-600 text-navy-950">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-ocean-500 text-navy-950">
           <Waves size={20} strokeWidth={2.5} />
         </span>
         <span className="min-w-0 leading-tight">
@@ -37,7 +37,7 @@ export function AppHeader() {
               href={href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex min-h-[40px] items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm transition',
+                'flex min-h-[44px] items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm transition',
                 active ? 'bg-ocean-500 font-semibold text-navy-950' : 'text-slate-300 hover:bg-white/10',
               )}
             >
@@ -50,11 +50,11 @@ export function AppHeader() {
 
       <button
         onClick={() => setLive(!live)}
-        className="hidden min-h-[40px] items-center gap-2 rounded-xl border border-white/10 px-3 text-xs text-slate-300 hover:bg-white/5 md:flex"
+        className="hidden min-h-[44px] items-center gap-2 rounded-xl border border-white/10 px-3 text-xs text-slate-300 hover:bg-white/5 md:flex"
         title={live ? 'หยุดข้อมูลเรียลไทม์จำลอง' : 'เปิดข้อมูลเรียลไทม์จำลอง'}
       >
-        <Radio size={14} className={live ? 'text-safe' : 'text-slate-500'} />
-        <span className={live ? 'font-semibold text-safe' : ''}>{live ? 'สด' : 'หยุดชั่วคราว'}</span>
+        <span className={cn('h-2 w-2 rounded-full', live ? 'bg-safe' : 'bg-slate-500')} />
+        <span className="text-slate-300">{live ? 'สด' : 'หยุดชั่วคราว'}</span>
         {lastUpdate && (
           <span className="text-slate-500">
             · <TimeAgo ts={lastUpdate} />

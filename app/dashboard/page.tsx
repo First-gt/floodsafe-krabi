@@ -3,11 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Flame, Layers, ListChecks, Map as MapIcon, Waves } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
-import { DepthLegend } from '@/components/DepthLegend';
-import { EQUIPMENT_ICONS, FALLBACK_ICON } from '@/components/equipment-icons';
 import { IncidentCard } from '@/components/IncidentCard';
 import { FloodMap } from '@/components/MapView';
-import { EQUIPMENT_CATALOG } from '@/lib/ai-engine';
 import type { LngLat } from '@/lib/geo';
 import { KRABI_CENTER } from '@/lib/mock-data';
 import { useFloodStore } from '@/lib/store';
@@ -23,7 +20,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 export default function DashboardPage() {
-  const { incidents, checkpoints, zones, teams, equipment } = useFloodStore();
+  const { incidents, checkpoints, zones, teams } = useFloodStore();
   const [filter, setFilter] = useState<Filter>('pending');
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<'list' | 'map'>('list');
@@ -37,7 +34,6 @@ export default function DashboardPage() {
     incidents.forEach((i) => c[i.status]++);
     return c;
   }, [incidents]);
-  const critical = incidents.filter((i) => i.status === 'pending' && i.recommendation.priority === 'critical').length;
 
   const list = useMemo(
     () =>
@@ -65,56 +61,20 @@ export default function DashboardPage() {
     if (selected && !list.some((i) => i.id === selected)) setSelected(null);
   }, [list, selected]);
 
-  const stats = [
-    { label: 'รอดำเนินการ', value: counts.pending, cls: 'text-yellow-300' },
-    { label: 'วิกฤต', value: critical, cls: 'text-red-300' },
-    { label: 'ส่งทีมแล้ว', value: counts.dispatched, cls: 'text-sky-300' },
-    { label: 'ช่วยแล้ว', value: counts.rescued, cls: 'text-green-300' },
-  ];
-
   return (
     <div className="flex h-dvh flex-col">
       <AppHeader />
 
-      {/* stats + resources */}
-      <div className="glass flex shrink-0 items-center gap-3 overflow-x-auto border-x-0 border-t-0 px-3 py-2 sm:px-5">
-        <div className="flex items-center gap-4 pr-2">
-          {stats.map((s) => (
-            <div key={s.label} className="leading-tight">
-              <p className={cn('text-xl font-bold', s.cls)}>{s.value}</p>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500">{s.label}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mx-1 h-9 w-px shrink-0 bg-white/10" />
-        <div className="flex items-center gap-2" aria-label="สต็อกอุปกรณ์">
-          {equipment
-            .filter((e) => ['boat', 'truck6', 'swift_kit', 'medic_kit', 'life_jacket'].includes(e.id))
-            .map((e) => {
-              const Icon = EQUIPMENT_ICONS[e.id] ?? FALLBACK_ICON;
-              const low = e.available / e.total < 0.3;
-              return (
-                <span
-                  key={e.id}
-                  title={EQUIPMENT_CATALOG[e.id].label}
-                  className={cn('flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-xs', low ? 'bg-danger/15 text-red-300' : 'bg-white/5 text-slate-300')}
-                >
-                  <Icon size={14} />
-                  <b>{e.available}</b>
-                  <span className="text-slate-500">/{e.total}</span>
-                </span>
-              );
-            })}
-          <span className="shrink-0 rounded-lg bg-white/5 px-2 py-1 text-xs text-slate-300">
-            ทีมว่าง <b>{teams.filter((t) => t.status === 'available').length}</b>
-            <span className="text-slate-500">/{teams.length}</span>
-          </span>
-        </div>
-      </div>
-
       <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* list */}
         <aside className={cn('min-h-0 w-full flex-col border-white/10 bg-navy-950 lg:flex lg:w-[440px] lg:shrink-0 lg:border-r', view === 'list' ? 'flex flex-1' : 'hidden')}>
+          <div className="flex shrink-0 items-center justify-between border-b border-white/5 px-3 py-2 text-xs text-slate-400">
+            <span>รายการเหตุการณ์</span>
+            <span className="text-slate-400">
+              ทีมว่าง <b className="font-semibold text-slate-200">{teams.filter((t) => t.status === 'available').length}</b>/{teams.length}
+            </span>
+          </div>
+
           <div className="flex shrink-0 gap-1 overflow-x-auto p-3" role="tablist" aria-label="กรองตามสถานะ">
             {FILTERS.map((f) => (
               <button
@@ -178,7 +138,7 @@ export default function DashboardPage() {
                 aria-pressed={heat}
                 aria-label="Heatmap ระดับน้ำ"
                 title="Heatmap ระดับน้ำ"
-                className={cn('flex h-12 items-center gap-2 px-3 text-xs transition hover:bg-white/10', heat ? 'text-orange-300' : 'text-slate-300')}
+                className={cn('flex h-12 items-center gap-2 px-3 text-xs transition hover:bg-white/10', heat ? 'text-ocean-300' : 'text-slate-300')}
               >
                 <Flame size={18} /> <span className="hidden sm:inline">Heatmap ระดับน้ำ</span>
               </button>
@@ -193,7 +153,6 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-          <DepthLegend compact className="absolute bottom-24 left-3 z-10 hidden w-56 sm:block lg:bottom-6" />
         </section>
 
         {/* mobile list/map switch */}

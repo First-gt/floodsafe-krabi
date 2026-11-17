@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Info, Layers, LocateFixed, Phone, Plus, X } from 'lucide-react';
+import { AlertTriangle, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
 import { DepthLegend } from '@/components/DepthLegend';
 import { HotlineSheet } from '@/components/HotlineSheet';
@@ -26,6 +26,7 @@ export default function CitizenPage() {
   const { checkpoints } = useFloodStore();
   const gps = useGeolocation();
 
+  const [mode, setMode] = useState<'choose' | 'route'>('choose');
   const [vehicle, setVehicle] = useState<VehicleProfile | null>(null);
   const [vehicleReady, setVehicleReady] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
@@ -198,6 +199,7 @@ export default function CitizenPage() {
 
   const dropPin = useCallback(
     (p: LngLat) => {
+      if (mode !== 'route') return;
       if (!vehicle) {
         setVehicleOpen(true);
         return;
@@ -209,7 +211,7 @@ export default function CitizenPage() {
       const near = PLACES.map((pl) => ({ pl, d: haversine(p, [pl.lng, pl.lat]) })).sort((a, b) => a.d - b.d)[0];
       setDestination(near && near.d < 350 ? { name: near.pl.name, coord: [near.pl.lng, near.pl.lat] } : { name: 'หมุดปลายทางที่ปักไว้', coord: p });
     },
-    [vehicle, locationReady],
+    [mode, vehicle, locationReady],
   );
 
   const nearestShelter = useCallback(async () => {
@@ -256,46 +258,104 @@ export default function CitizenPage() {
         {/* แถบซ้ายบนเดสก์ท็อป / การ์ดด้านบนบนมือถือ */}
         <aside className="pointer-events-none absolute inset-x-2 bottom-24 top-2 z-10 flex flex-col sm:pointer-events-auto sm:static sm:z-20 sm:w-[400px] sm:shrink-0 sm:border-r sm:border-white/10 sm:bg-navy-900/95">
           <div className="pointer-events-auto flex max-h-[54dvh] min-h-0 flex-1 flex-col sm:max-h-full">
-            {vehicleReady && (
-              <RoutePlanner
-                vehicle={vehicle}
-                onQuickSelectVehicle={(v) => {
-                  saveVehicle(v);
-                  setVehicle(v);
-                }}
-                onEditVehicle={() => setVehicleOpen(true)}
-                geoStatus={gps.status}
-                locationReady={locationReady}
-                onEnableLocation={() => gps.request()}
-                onUseDemo={() => setUseDemo(true)}
-                originName={originName}
-                originIsGps={usingGps}
-                destination={destination}
-                onSelectDestination={setDestination}
-                onClear={() => setDestination(null)}
-                route={route}
-                planning={planning}
-                onNearestShelter={nearestShelter}
-                onRequestHelp={() => setReportOpen(true)}
-                notice={notice}
-                navigating={navigating}
-                onStartNav={() => setNavigating(true)}
-                onStopNav={() => setNavigating(false)}
-                navStep={nav.step}
-                navDistToNext={nav.dist}
-              />
+            {mode === 'choose' ? (
+              <section
+                className="glass flex min-h-0 max-h-full flex-col rounded-3xl sm:h-full sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none sm:backdrop-blur-none"
+                aria-label="เลือกบริการ"
+              >
+                <div className="flex min-h-[56px] items-center border-b border-white/10 px-4">
+                  <h2 className="text-base font-bold text-white">ต้องการทำอะไร?</h2>
+                </div>
+                <div className="flex min-h-0 flex-1 flex-col justify-start gap-3 overflow-y-auto p-4">
+                  {/* การ์ดสีแดง/danger: แจ้งน้ำท่วม / ขอความช่วยเหลือ */}
+                  <button
+                    type="button"
+                    onClick={() => setReportOpen(true)}
+                    className="group flex min-h-[96px] w-full items-center gap-3.5 rounded-2xl border-2 border-danger/60 bg-danger/15 p-4 text-left transition hover:border-danger hover:bg-danger/25 active:scale-[0.99]"
+                  >
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-danger/25 text-red-300 transition group-hover:bg-danger/35 group-hover:text-red-200">
+                      <AlertTriangle size={24} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-base font-bold text-red-200 leading-tight">
+                        แจ้งน้ำท่วม / ขอความช่วยเหลือ
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-300 leading-relaxed">
+                        กดตรงนี้ ถ้าคุณอยู่ในพื้นที่น้ำท่วม หรือติดอยู่และต้องการคนช่วย
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* การ์ดสี ocean/cyan: เช็กเส้นทางหนีน้ำ */}
+                  <button
+                    type="button"
+                    onClick={() => setMode('route')}
+                    className="group flex min-h-[96px] w-full items-center gap-3.5 rounded-2xl border-2 border-ocean-400/50 bg-ocean-500/15 p-4 text-left transition hover:border-ocean-300 hover:bg-ocean-500/25 active:scale-[0.99]"
+                  >
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-ocean-500/25 text-ocean-300 transition group-hover:bg-ocean-500/35 group-hover:text-ocean-200">
+                      <ShieldCheck size={24} className="stroke-[2.5]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-base font-bold text-ocean-200 leading-tight">
+                        เช็กเส้นทางหนีน้ำ
+                      </span>
+                      <span className="mt-1 block text-xs text-slate-300 leading-relaxed">
+                        กดตรงนี้ ถ้าคุณกำลังจะขับรถผ่านพื้นที่น้ำท่วม ระบบจะหาทางที่รถคุณผ่านได้
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* หมายเหตุใต้การ์ด */}
+                  <p className="mt-1 text-center text-xs text-slate-400 sm:text-left">
+                    เส้นทางคำนวณจากรายงานน้ำท่วมที่ประชาชนแจ้งเข้ามา
+                  </p>
+                </div>
+              </section>
+            ) : (
+              vehicleReady && (
+                <RoutePlanner
+                  vehicle={vehicle}
+                  onQuickSelectVehicle={(v) => {
+                    saveVehicle(v);
+                    setVehicle(v);
+                  }}
+                  onEditVehicle={() => setVehicleOpen(true)}
+                  geoStatus={gps.status}
+                  locationReady={locationReady}
+                  onEnableLocation={() => gps.request()}
+                  onUseDemo={() => setUseDemo(true)}
+                  originName={originName}
+                  originIsGps={usingGps}
+                  destination={destination}
+                  onSelectDestination={setDestination}
+                  onClear={() => setDestination(null)}
+                  route={route}
+                  planning={planning}
+                  onNearestShelter={nearestShelter}
+                  onRequestHelp={() => setReportOpen(true)}
+                  notice={notice}
+                  navigating={navigating}
+                  onStartNav={() => setNavigating(true)}
+                  onStopNav={() => setNavigating(false)}
+                  navStep={nav.step}
+                  navDistToNext={nav.dist}
+                  onBack={() => setMode('choose')}
+                />
+              )
             )}
           </div>
-          {/* ปุ่มแจ้งเหตุติดด้านล่างของแถบซ้ายบนเดสก์ท็อป */}
-          <div className="hidden border-t border-white/10 p-4 sm:block">
-            <button
-              onClick={() => setReportOpen(true)}
-              className="btn-danger w-full gap-2 rounded-2xl text-sm shadow-lg shadow-danger/25"
-            >
-              <Plus size={18} strokeWidth={2.5} />
-              แจ้งน้ำท่วม / ขอความช่วยเหลือ
-            </button>
-          </div>
+          {/* ปุ่มแจ้งเหตุติดด้านล่างของแถบซ้ายบนเดสก์ท็อป (เฉพาะในโหมดเส้นทาง เป็นปุ่มรองขนาดเล็กลง) */}
+          {mode === 'route' && (
+            <div className="hidden border-t border-white/10 p-3 sm:block">
+              <button
+                onClick={() => setReportOpen(true)}
+                className="btn-ghost w-full min-h-[44px] gap-2 rounded-xl border border-danger/40 text-xs font-medium text-red-300 hover:bg-danger/10 hover:border-danger/60"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                แจ้งน้ำท่วม / ขอความช่วยเหลือ
+              </button>
+            </div>
+          )}
         </aside>
 
         {/* พื้นที่แผนที่เต็มจอฝั่งขวา */}
@@ -308,10 +368,12 @@ export default function CitizenPage() {
             destination={destination?.coord ?? null}
             userLocation={usingGps ? gps.position : locationReady ? origin : null}
             showZones={showZones}
-            pickMode={ready}
+            pickMode={mode === 'route' && ready}
             onMapClick={dropPin}
             places={PLACES}
-            onPlaceClick={(pl) => dropPin([pl.lng, pl.lat])}
+            onPlaceClick={(pl) => {
+              if (mode === 'route') dropPin([pl.lng, pl.lat]);
+            }}
             showDistrictLabels
             flyTo={flyTo}
             fitTo={fitTo}
@@ -347,7 +409,7 @@ export default function CitizenPage() {
           </div>
 
           {/* คำแนะนำแตะแผนที่ (แสดงตรงกลางด้านบนของแผนที่ฝั่งขวา) */}
-          {ready && !destination && (
+          {mode === 'route' && ready && !destination && (
             <div className="pointer-events-none absolute inset-x-0 top-3 z-10 hidden justify-center sm:flex">
               <p className="glass animate-fade rounded-full px-4 py-2 text-xs text-slate-200">
                 แตะบนแผนที่เพื่อเลือกปลายทาง
@@ -355,16 +417,18 @@ export default function CitizenPage() {
             </div>
           )}
 
-          {/* ปุ่มแจ้งเหตุบนมือถือ */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4 sm:hidden">
-            <button
-              onClick={() => setReportOpen(true)}
-              className="btn-danger pointer-events-auto !min-h-[52px] gap-2 rounded-full px-6 text-base shadow-2xl shadow-danger/40"
-            >
-              <Plus size={20} strokeWidth={3} />
-              แจ้งน้ำท่วม / ขอความช่วยเหลือ
-            </button>
-          </div>
+          {/* ปุ่มแจ้งเหตุบนมือถือ (เฉพาะในโหมดเส้นทาง เป็นปุ่มรองขนาดกะทัดรัด) */}
+          {mode === 'route' && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4 sm:hidden">
+              <button
+                onClick={() => setReportOpen(true)}
+                className="btn-ghost glass pointer-events-auto min-h-[44px] gap-2 rounded-full border border-danger/40 px-5 text-xs font-medium text-red-300 shadow-xl shadow-black/40 hover:bg-danger/10"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                แจ้งน้ำท่วม / ขอความช่วยเหลือ
+              </button>
+            </div>
+          )}
         </div>
       </main>
 

@@ -109,6 +109,7 @@ interface Props {
   onStopNav: () => void;
   navStep: RouteStep | null;
   navDistToNext: number | null;
+  onBack?: () => void;
 }
 
 export function RoutePlanner(p: Props) {
@@ -175,18 +176,36 @@ export function RoutePlanner(p: Props) {
       className="glass flex min-h-0 max-h-full flex-col rounded-3xl sm:h-full sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none sm:backdrop-blur-none"
       aria-label="วางแผนเส้นทางปลอดภัย"
     >
-      <button className="flex min-h-[56px] items-center gap-3 px-4 text-left sm:cursor-default sm:border-b sm:border-white/10" onClick={() => { if (window.innerWidth < 640) setCollapsed((c) => !c); }} aria-expanded={!collapsed}>
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-ocean-500/15 text-ocean-300">
-          <ShieldCheck size={18} />
-        </span>
-        <span className="mr-auto leading-tight">
-          <span className="block text-base font-bold text-white">เช็กเส้นทางหนีน้ำ</span>
-          <span className="block text-xs text-slate-400">
-            {p.destination ? `ปลายทาง: ${p.destination.name}` : 'ทำตาม 3 ขั้นตอนง่ายๆ เพื่อหาทางรอด'}
+      <header className="border-b border-white/10">
+        {p.onBack && (
+          <div className="flex items-center border-b border-white/5 px-3 py-1.5 sm:px-4">
+            <button
+              type="button"
+              onClick={p.onBack}
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold text-ocean-300 transition hover:bg-white/10 hover:text-white"
+            >
+              ← กลับไปหน้าเลือก
+            </button>
+          </div>
+        )}
+        <button
+          type="button"
+          className="flex min-h-[56px] w-full items-center gap-3 px-4 text-left sm:cursor-default"
+          onClick={() => { if (window.innerWidth < 640) setCollapsed((c) => !c); }}
+          aria-expanded={!collapsed}
+        >
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-ocean-500/15 text-ocean-300">
+            <ShieldCheck size={18} />
           </span>
-        </span>
-        <ChevronDown size={18} className={cn('text-slate-400 transition sm:hidden', collapsed && '-rotate-90')} />
-      </button>
+          <span className="mr-auto leading-tight">
+            <span className="block text-base font-bold text-white">เช็กเส้นทางหนีน้ำ</span>
+            <span className="block text-xs text-slate-400">
+              {p.destination ? `ปลายทาง: ${p.destination.name}` : 'ทำตาม 3 ขั้นตอนง่ายๆ เพื่อหาทางรอด'}
+            </span>
+          </span>
+          <ChevronDown size={18} className={cn('text-slate-400 transition sm:hidden', collapsed && '-rotate-90')} />
+        </button>
+      </header>
 
       {!collapsed && (
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
