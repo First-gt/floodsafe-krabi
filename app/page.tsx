@@ -67,7 +67,7 @@ export default function CitizenPage() {
       setMode('route');
       setVehicle(defaultProfile('sedan', 'รถเก๋ง (สาธิต)'));
       setUseDemo(true);
-      setDestination({ name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', coord: [100.4954, 7.0074] });
+      setDestination({ name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', coord: [100.4942, 7.0072] });
     } else if (step === 'ready') {
       setMode('choose');
       setDestination(null);

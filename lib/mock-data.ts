@@ -218,7 +218,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
 /* สถานที่สำหรับค้นหาปลายทาง (alias = ชื่อภาษาอังกฤษ ใช้ค้นหา)           */
 /* ------------------------------------------------------------------ */
 export const PLACES: Place[] = [
-  { id: 'p1', name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', alias: 'PSU Hospital Hat Yai มอ', district: 'Hat Yai', lng: 100.4954, lat: 7.0074, kind: 'hospital' },
+  { id: 'p1', name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', alias: 'PSU Hospital Hat Yai มอ', district: 'Hat Yai', lng: 100.4942, lat: 7.0072, kind: 'hospital' },
   { id: 'p2', name: 'โรงพยาบาลหาดใหญ่', alias: 'Hat Yai Hospital', district: 'Hat Yai', lng: 100.4712, lat: 7.0112, kind: 'hospital' },
   { id: 'p3', name: 'ตัวเมืองหาดใหญ่ (ตลาดกิมหยง)', alias: 'Hat Yai Kim Yong Market', district: 'Hat Yai', lng: 100.4747, lat: 7.0084, kind: 'town' },
   { id: 'p4', name: 'ท่าอากาศยานนานาชาติหาดใหญ่', alias: 'Hat Yai Airport', district: 'Hat Yai', lng: 100.3929, lat: 6.9332, kind: 'transport' },

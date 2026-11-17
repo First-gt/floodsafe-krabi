@@ -46,10 +46,10 @@ function fetchCandidates(points: LngLat[], alternatives: boolean, signal?: Abort
     `?alternatives=${alternatives ? 'true' : 'false'}&continue_straight=true&overview=full&geometries=geojson&steps=true`;
   const proxyUrl = `/api/route?coords=${encodeURIComponent(coordStr)}&alternatives=${alternatives ? 'true' : 'false'}`;
 
-  // ลองเรียก OSRM โดยตรงก่อน ถ้าไม่ได้ให้ fallback ผ่าน /api/route ของเซิร์ฟเวอร์
+  // ลองเรียกผ่าน /api/route ของเซิร์ฟเวอร์ก่อน (มี fallback 2 เซิร์ฟเวอร์) ถ้าไม่ได้ค่อยเรียกตรง
   const p = (async () => {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const timer = setTimeout(() => ctrl.abort(), 15000);
     try {
       let res = await fetch(proxyUrl, { signal: ctrl.signal }).catch(() => null);
       if (!res || !res.ok) {
@@ -71,6 +71,7 @@ function fetchCandidates(points: LngLat[], alternatives: boolean, signal?: Abort
       clearTimeout(timer);
     }
   })();
+  cache.set(key, p);
   p.catch(() => cache.delete(key));
   return signal
     ? new Promise<Candidate[]>((resolve, reject) => {

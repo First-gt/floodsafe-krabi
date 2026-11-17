@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
-const OSRM_URL = (process.env.NEXT_PUBLIC_OSRM_URL || 'https://router.project-osrm.org').replace(/\/$/, '');
+const OSRM_SERVERS = [
+  (process.env.NEXT_PUBLIC_OSRM_URL || 'https://router.project-osrm.org').replace(/\/$/, ''),
+  'https://routing.openstreetmap.de/routed-car',
+];
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -11,13 +14,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'bad_coords' }, { status: 400 });
   }
 
-  const url = `${OSRM_URL}/route/v1/driving/${coords}?alternatives=${alternatives}&continue_straight=true&overview=full&geometries=geojson&steps=true`;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10_000), cache: 'no-store' });
-    if (!res.ok) return NextResponse.json({ error: `osrm_${res.status}` }, { status: 502 });
-    const data = await res.json();
-    return NextResponse.json(data);
-  } catch {
-    return NextResponse.json({ error: 'osrm_unreachable' }, { status: 502 });
+  for (const base of OSRM_SERVERS) {
+    const url = `${base}/route/v1/driving/${coords}?alternatives=${alternatives}&continue_straight=true&overview=full&geometries=geojson&steps=true`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(6_500), cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.code === 'Ok' && data.routes?.length) {
+        return NextResponse.json(data);
+      }
+    } catch {
+      /* try next server */
+    }
   }
+
+  return NextResponse.json({ error: 'osrm_unreachable' }, { status: 502 });
 }
