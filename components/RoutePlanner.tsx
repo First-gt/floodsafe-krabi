@@ -166,23 +166,42 @@ export function RoutePlanner(p: Props) {
   const r = p.route;
   const VIcon = p.vehicle ? VEHICLE_ICON[p.vehicle.type] : Car;
 
+  const stepDone1 = !!p.vehicle;
+  const stepDone2 = p.locationReady;
+  const stepDone3 = !!p.destination;
+
   return (
-    <section className="glass flex min-h-0 max-h-full flex-col rounded-3xl" aria-label="วางแผนเส้นทางปลอดภัย">
-      <button className="flex min-h-[52px] items-center gap-3 px-4 text-left" onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed}>
+    <section
+      className="glass flex min-h-0 max-h-full flex-col rounded-3xl sm:h-full sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none sm:backdrop-blur-none"
+      aria-label="วางแผนเส้นทางปลอดภัย"
+    >
+      <button className="flex min-h-[56px] items-center gap-3 px-4 text-left sm:cursor-default sm:border-b sm:border-white/10" onClick={() => { if (window.innerWidth < 640) setCollapsed((c) => !c); }} aria-expanded={!collapsed}>
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-ocean-500/15 text-ocean-300">
           <ShieldCheck size={18} />
         </span>
         <span className="mr-auto leading-tight">
-          <span className="block text-sm font-semibold text-white">เช็กเส้นทางหนีน้ำ</span>
-          <span className="block text-[11px] text-slate-400">
-            {p.destination ? `ปลายทาง: ${p.destination.name}` : 'เลือกรถ → ตำแหน่ง → ปลายทาง'}
+          <span className="block text-base font-bold text-white">เช็กเส้นทางหนีน้ำ</span>
+          <span className="block text-xs text-slate-400">
+            {p.destination ? `ปลายทาง: ${p.destination.name}` : 'ทำตาม 3 ขั้นตอนง่ายๆ เพื่อหาทางรอด'}
           </span>
         </span>
-        <ChevronDown size={18} className={cn('text-slate-400 transition', collapsed && '-rotate-90')} />
+        <ChevronDown size={18} className={cn('text-slate-400 transition sm:hidden', collapsed && '-rotate-90')} />
       </button>
 
       {!collapsed && (
-        <div className="min-h-0 space-y-3 overflow-y-auto px-4 pb-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          {/* แถบสรุป 3 ขั้นตอนให้เห็นภาพรวมทันที */}
+          <div className="grid grid-cols-3 gap-1.5 rounded-2xl bg-navy-950/60 p-1.5 text-[11px] font-medium">
+            <div className={cn('flex items-center justify-center gap-1 rounded-xl py-1.5', stepDone1 ? 'bg-safe/15 text-green-300' : 'bg-ocean-500/20 text-ocean-300')}>
+              <span>{stepDone1 ? '✓' : '1.'}</span> เลือกรถ
+            </div>
+            <div className={cn('flex items-center justify-center gap-1 rounded-xl py-1.5', stepDone2 ? 'bg-safe/15 text-green-300' : stepDone1 ? 'bg-ocean-500/20 text-ocean-300' : 'text-slate-500')}>
+              <span>{stepDone2 ? '✓' : '2.'}</span> จุดเริ่ม
+            </div>
+            <div className={cn('flex items-center justify-center gap-1 rounded-xl py-1.5', stepDone3 ? 'bg-safe/15 text-green-300' : stepDone2 ? 'bg-ocean-500/20 text-ocean-300' : 'text-slate-500')}>
+              <span>{stepDone3 ? '✓' : '3.'}</span> ปลายทาง
+            </div>
+          </div>
           {/* ขั้นที่ 1: ข้อมูลรถ (แตะเลือก 1 ครั้งได้ทันที) */}
           {!p.vehicle ? (
             <div className="rounded-2xl border border-ocean-400/40 bg-ocean-500/10 p-3">

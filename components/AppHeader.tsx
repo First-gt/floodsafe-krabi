@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 import { TimeAgo } from './TimeAgo';
 
 const NAV = [
-  { href: '/', label: 'ประชาชน', icon: Navigation },
-  { href: '/dashboard', label: 'ศูนย์ประสานงาน', icon: LayoutDashboard },
+  { href: '/', label: 'แผนที่ & นำทาง', icon: Navigation },
+  { href: '/dashboard', label: 'ศูนย์กู้ภัย', icon: LayoutDashboard },
 ];
 
 export function AppHeader() {
@@ -24,7 +24,7 @@ export function AppHeader() {
         </span>
         <span className="min-w-0 leading-tight">
           <span className="block truncate text-sm font-semibold text-white">FloodSafe กระบี่</span>
-          <span className="hidden truncate text-[11px] text-slate-400 sm:block">นำทางหลบน้ำท่วมด้วย AI และศูนย์สั่งการกู้ภัย</span>
+          <span className="hidden truncate text-[11px] text-slate-400 sm:block">เช็กเส้นทางหลบน้ำท่วม · แจ้งเหตุฉุกเฉิน</span>
         </span>
       </Link>
 

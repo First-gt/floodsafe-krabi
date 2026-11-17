@@ -56,8 +56,8 @@ export default function CitizenPage() {
     const update = () =>
       setPadding(
         window.innerWidth >= 640
-          ? { top: 80, bottom: 120, left: 460, right: 80 }
-          : { top: Math.round(window.innerHeight * 0.55), bottom: 110, left: 40, right: 40 },
+          ? { top: 72, bottom: 72, left: 60, right: 60 }
+          : { top: Math.round(window.innerHeight * 0.52), bottom: 110, left: 40, right: 40 },
       );
     update();
     window.addEventListener('resize', update);
@@ -252,30 +252,10 @@ export default function CitizenPage() {
   return (
     <div className="flex h-dvh flex-col">
       <AppHeader />
-      <main className="relative min-h-0 flex-1">
-        <FloodMap
-          checkpoints={checkpoints}
-          zones={zones}
-          route={route}
-          origin={destination && routeOrigin ? routeOrigin : null}
-          destination={destination?.coord ?? null}
-          userLocation={usingGps ? gps.position : locationReady ? origin : null}
-          showZones={showZones}
-          pickMode={ready}
-          onMapClick={dropPin}
-          places={PLACES}
-          onPlaceClick={(pl) => dropPin([pl.lng, pl.lat])}
-          showDistrictLabels
-          flyTo={flyTo}
-          fitTo={fitTo}
-          padding={padding}
-          initialCenter={[98.93, 8.17]}
-          initialZoom={9.6}
-        />
-
-        {/* planner */}
-        <div className="pointer-events-none absolute inset-x-2 bottom-24 top-2 z-10 flex flex-col sm:inset-x-auto sm:left-4 sm:top-4 sm:w-[420px]">
-          <div className="pointer-events-auto flex max-h-[54dvh] min-h-0 flex-col sm:max-h-full">
+      <main className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
+        {/* แถบซ้ายบนเดสก์ท็อป / การ์ดด้านบนบนมือถือ */}
+        <aside className="pointer-events-none absolute inset-x-2 bottom-24 top-2 z-10 flex flex-col sm:pointer-events-auto sm:static sm:z-20 sm:w-[400px] sm:shrink-0 sm:border-r sm:border-white/10 sm:bg-navy-900/95">
+          <div className="pointer-events-auto flex max-h-[54dvh] min-h-0 flex-1 flex-col sm:max-h-full">
             {vehicleReady && (
               <RoutePlanner
                 vehicle={vehicle}
@@ -306,65 +286,85 @@ export default function CitizenPage() {
               />
             )}
           </div>
-        </div>
+          {/* ปุ่มแจ้งเหตุติดด้านล่างของแถบซ้ายบนเดสก์ท็อป */}
+          <div className="hidden border-t border-white/10 p-4 sm:block">
+            <button
+              onClick={() => setReportOpen(true)}
+              className="btn-danger w-full gap-2 rounded-2xl text-sm shadow-lg shadow-danger/25"
+            >
+              <Plus size={18} strokeWidth={2.5} />
+              แจ้งน้ำท่วม / ขอความช่วยเหลือ
+            </button>
+          </div>
+        </aside>
 
-        {/* map tools (มีป้ายกำกับชัดเจน กดง่ายทั้งมือถือและเดสก์ท็อป) */}
-        <div className="absolute bottom-24 right-3 z-10 flex flex-col items-end gap-2">
-          {showLegend && (
-            <div className="relative max-h-[50dvh] w-72 animate-fade overflow-y-auto rounded-2xl">
-              <DepthLegend full />
-              <button className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-white/10" onClick={() => setShowLegend(false)} aria-label="ปิดคำอธิบาย">
-                <X size={14} />
-              </button>
+        {/* พื้นที่แผนที่เต็มจอฝั่งขวา */}
+        <div className="relative min-h-0 flex-1">
+          <FloodMap
+            checkpoints={checkpoints}
+            zones={zones}
+            route={route}
+            origin={destination && routeOrigin ? routeOrigin : null}
+            destination={destination?.coord ?? null}
+            userLocation={usingGps ? gps.position : locationReady ? origin : null}
+            showZones={showZones}
+            pickMode={ready}
+            onMapClick={dropPin}
+            places={PLACES}
+            onPlaceClick={(pl) => dropPin([pl.lng, pl.lat])}
+            showDistrictLabels
+            flyTo={flyTo}
+            fitTo={fitTo}
+            padding={padding}
+            initialCenter={[98.93, 8.17]}
+            initialZoom={9.6}
+          />
+
+          {/* แถบเครื่องมือแผนที่แบบแนวนอนด้านบนขวา (เดสก์ท็อป) / ด้านล่างขวา (มือถือ) */}
+          <div className="absolute bottom-24 right-3 z-10 flex flex-col items-end gap-2 sm:bottom-auto sm:top-3">
+            <div className="glass flex flex-col gap-0.5 rounded-2xl p-1 sm:flex-row sm:items-center">
+              <ToolBtn label="ตำแหน่งฉัน" onClick={locateMe}>
+                <LocateFixed size={16} />
+              </ToolBtn>
+              <ToolBtn label="สายด่วน 1784" onClick={() => setHotlineOpen(true)}>
+                <Phone size={16} className="text-red-400" />
+              </ToolBtn>
+              <ToolBtn label="สัญลักษณ์" active={showLegend} onClick={() => setShowLegend((s) => !s)}>
+                <Info size={16} />
+              </ToolBtn>
+              <ToolBtn label="เขตน้ำท่วม" active={showZones} onClick={() => setShowZones((s) => !s)}>
+                <Layers size={16} />
+              </ToolBtn>
+            </div>
+            {showLegend && (
+              <div className="relative max-h-[50dvh] w-72 animate-fade overflow-y-auto rounded-2xl">
+                <DepthLegend full />
+                <button className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-white/10" onClick={() => setShowLegend(false)} aria-label="ปิดคำอธิบาย">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* คำแนะนำแตะแผนที่ (แสดงตรงกลางด้านบนของแผนที่ฝั่งขวา) */}
+          {ready && !destination && (
+            <div className="pointer-events-none absolute inset-x-0 top-3 z-10 hidden justify-center sm:flex">
+              <p className="glass animate-fade rounded-full px-4 py-2 text-xs text-slate-200">
+                แตะบนแผนที่เพื่อเลือกปลายทาง
+              </p>
             </div>
           )}
-          <div className="glass flex flex-col gap-0.5 overflow-hidden rounded-2xl p-1">
-            <ToolBtn label="ตำแหน่งฉัน" onClick={locateMe}>
-              <LocateFixed size={16} />
-            </ToolBtn>
-            <ToolBtn label="สายด่วน" onClick={() => setHotlineOpen(true)}>
-              <Phone size={16} className="text-red-400" />
-            </ToolBtn>
-            <ToolBtn label="สัญลักษณ์" active={showLegend} onClick={() => setShowLegend((s) => !s)}>
-              <Info size={16} />
-            </ToolBtn>
-            <ToolBtn label="เขตน้ำท่วม" active={showZones} onClick={() => setShowZones((s) => !s)}>
-              <Layers size={16} />
-            </ToolBtn>
+
+          {/* ปุ่มแจ้งเหตุบนมือถือ */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4 sm:hidden">
+            <button
+              onClick={() => setReportOpen(true)}
+              className="btn-danger pointer-events-auto !min-h-[52px] gap-2 rounded-full px-6 text-base shadow-2xl shadow-danger/40"
+            >
+              <Plus size={20} strokeWidth={3} />
+              แจ้งน้ำท่วม / ขอความช่วยเหลือ
+            </button>
           </div>
-        </div>
-
-        {/* report FAB */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4">
-          <button
-            onClick={() => setReportOpen(true)}
-            className="btn-danger pointer-events-auto !min-h-[56px] gap-2 rounded-full px-6 text-base shadow-2xl shadow-danger/40"
-          >
-            <Plus size={20} strokeWidth={3} />
-            แจ้งน้ำท่วม / ขอความช่วยเหลือ
-          </button>
-        </div>
-
-        {ready && !destination && (
-          <div className="pointer-events-none absolute inset-x-0 top-3 z-10 hidden justify-center sm:flex">
-            <p className={cn('glass animate-fade rounded-full px-4 py-2 text-xs text-slate-200')} style={{ marginLeft: 440 }}>
-              แตะบนแผนที่เพื่อปักหมุดปลายทาง
-            </p>
-          </div>
-        )}
-
-        {/* สถานะตำแหน่งแบบกระชับ */}
-        <div className="pointer-events-none absolute right-3 top-3 z-10 hidden sm:flex">
-          <p className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-slate-200">
-            <span className={cn('h-2 w-2 rounded-full', usingGps ? 'bg-safe' : hasGps || useDemo ? 'bg-safety' : 'bg-slate-500')} />
-            {usingGps
-              ? 'GPS จริง'
-              : hasGps || useDemo
-                ? 'พิกัดสาธิต (กระบี่)'
-                : gps.status === 'locating'
-                  ? 'กำลังหาตำแหน่ง…'
-                  : 'ยังไม่ได้เปิด GPS'}
-          </p>
         </div>
       </main>
 
