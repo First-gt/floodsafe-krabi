@@ -39,8 +39,15 @@ import { PLACES } from '@/lib/mock-data';
 import type { RouteResult, RouteStep } from '@/lib/routing';
 import type { GeoStatus } from '@/lib/use-geolocation';
 import type { Place } from '@/lib/types';
-import { VEHICLE_PRESETS, type VehicleProfile, type VehicleType } from '@/lib/vehicle';
+import { VEHICLE_PRESETS, defaultProfile, type VehicleProfile, type VehicleType } from '@/lib/vehicle';
 import { cn } from '@/lib/utils';
+
+const QUICK_VEHICLES: { type: VehicleType; short: string }[] = [
+  { type: 'motorcycle', short: 'มอเตอร์ไซค์' },
+  { type: 'sedan', short: 'รถเก๋ง' },
+  { type: 'suv', short: 'SUV' },
+  { type: 'pickup', short: 'รถกระบะ' },
+];
 
 export interface Destination {
   name: string;
@@ -80,6 +87,7 @@ const VEHICLE_ICON: Record<VehicleType, LucideIcon> = {
 
 interface Props {
   vehicle: VehicleProfile | null;
+  onQuickSelectVehicle: (v: VehicleProfile) => void;
   onEditVehicle: () => void;
   geoStatus: GeoStatus;
   /** พร้อมใช้ต้นทางแล้ว (GPS หรือตำแหน่งสาธิต) */
@@ -108,7 +116,7 @@ export function RoutePlanner(p: Props) {
   const [focused, setFocused] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
-  const [showWhy, setShowWhy] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 640);
+  const [showWhy, setShowWhy] = useState(false);
   const [nominatimResults, setNominatimResults] = useState<Place[]>([]);
 
   useEffect(() => {
@@ -165,9 +173,9 @@ export function RoutePlanner(p: Props) {
           <ShieldCheck size={18} />
         </span>
         <span className="mr-auto leading-tight">
-          <span className="block text-sm font-semibold text-white">AI นำทางหลบน้ำท่วม</span>
+          <span className="block text-sm font-semibold text-white">เช็กเส้นทางหนีน้ำ</span>
           <span className="block text-[11px] text-slate-400">
-            {p.destination ? `ไป ${p.destination.name}` : 'เลือกเส้นทางที่รถของคุณลุยผ่านได้'}
+            {p.destination ? `ปลายทาง: ${p.destination.name}` : 'เลือกรถ → ตำแหน่ง → ปลายทาง'}
           </span>
         </span>
         <ChevronDown size={18} className={cn('text-slate-400 transition', collapsed && '-rotate-90')} />
@@ -175,39 +183,59 @@ export function RoutePlanner(p: Props) {
 
       {!collapsed && (
         <div className="min-h-0 space-y-3 overflow-y-auto px-4 pb-4">
-          {/* ขั้นที่ 1: ข้อมูลรถ */}
+          {/* ขั้นที่ 1: ข้อมูลรถ (แตะเลือก 1 ครั้งได้ทันที) */}
           {!p.vehicle ? (
             <div className="rounded-2xl border border-ocean-400/40 bg-ocean-500/10 p-3">
-              <p className="text-[11px] font-semibold tracking-wider text-ocean-300">ขั้นที่ 1 จาก 3</p>
-              <p className="mt-0.5 text-sm font-semibold text-white">ระบุข้อมูลรถของคุณ</p>
-              <p className="mt-1 text-xs text-slate-400">AI ต้องรู้ประเภทและความสูงน้ำที่รถลุยได้ เพื่อเลือกถนนที่ผ่านได้จริง</p>
-              <button className="btn-primary mt-3 w-full" onClick={p.onEditVehicle}>
-                <Car size={18} /> ระบุข้อมูลรถ
-              </button>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-ocean-300">1. คุณใช้รถอะไร?</p>
+                <button className="text-[11px] text-slate-400 underline-offset-2 hover:text-white hover:underline" onClick={p.onEditVehicle}>
+                  รุ่นอื่น / ตั้งค่าเอง
+                </button>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {QUICK_VEHICLES.map(({ type, short }) => {
+                  const Icon = VEHICLE_ICON[type];
+                  const depth = VEHICLE_PRESETS[type].maxDepthCm;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => p.onQuickSelectVehicle(defaultProfile(type, short))}
+                      className="flex min-h-[48px] items-center gap-2.5 rounded-xl border border-white/10 bg-navy-950/60 px-3 text-left transition hover:border-ocean-400/60 hover:bg-ocean-500/15"
+                    >
+                      <Icon size={18} className="shrink-0 text-ocean-300" />
+                      <span className="min-w-0 leading-tight">
+                        <span className="block text-xs font-semibold text-white">{short}</span>
+                        <span className="block text-[10px] text-slate-400">ลุยน้ำ ~{depth} ซม.</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <button
               onClick={p.onEditVehicle}
-              className="flex min-h-[52px] w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-left hover:bg-white/10"
-              aria-label="แก้ไขข้อมูลรถ"
+              className="flex min-h-[48px] w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-left hover:bg-white/10"
+              aria-label="เปลี่ยนข้อมูลรถ"
             >
-              <VIcon size={20} className="shrink-0 text-ocean-300" />
+              <VIcon size={18} className="shrink-0 text-ocean-300" />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-sm font-semibold text-white">{p.vehicle.model || VEHICLE_PRESETS[p.vehicle.type].label}</span>
                 <span className="block text-[11px] text-slate-400">
-                  {VEHICLE_PRESETS[p.vehicle.type].label} · ลุยน้ำได้ไม่เกิน {p.vehicle.maxDepthCm} ซม.
+                  ลุยน้ำได้สูงสุด {p.vehicle.maxDepthCm} ซม.
                 </span>
               </span>
-              <Pencil size={14} className="ml-auto shrink-0 text-slate-500" />
+              <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-ocean-300">
+                <Pencil size={12} /> เปลี่ยน
+              </span>
             </button>
           )}
 
           {/* ขั้นที่ 2: เปิดตำแหน่ง */}
           {p.vehicle && !p.locationReady && (
             <div className="rounded-2xl border border-ocean-400/40 bg-ocean-500/10 p-3">
-              <p className="text-[11px] font-semibold tracking-wider text-ocean-300">ขั้นที่ 2 จาก 3</p>
-              <p className="mt-0.5 text-sm font-semibold text-white">เปิดตำแหน่งของคุณ</p>
-              <p className="mt-1 text-xs text-slate-400">ใช้เป็นจุดเริ่มต้นนำทาง และตรวจหาน้ำท่วมรอบตัวคุณ</p>
+              <p className="text-xs font-semibold text-ocean-300">2. จุดเริ่มต้นของคุณ</p>
+              <p className="mt-0.5 text-xs text-slate-300">เปิด GPS เพื่อเริ่มนำทางจากจุดที่คุณอยู่</p>
               {p.geoStatus === 'denied' && (
                 <p className="mt-2 rounded-lg bg-danger/10 p-2 text-xs text-red-300" role="alert">
                   ไม่ได้รับอนุญาตให้เข้าถึงตำแหน่ง – กรุณาอนุญาตในเบราว์เซอร์ แล้วกดลองอีกครั้ง
@@ -218,12 +246,12 @@ export function RoutePlanner(p: Props) {
                   อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง
                 </p>
               )}
-              <button className="btn-primary mt-3 w-full" onClick={p.onEnableLocation} disabled={p.geoStatus === 'locating'}>
+              <button className="btn-primary mt-2.5 w-full" onClick={p.onEnableLocation} disabled={p.geoStatus === 'locating'}>
                 {p.geoStatus === 'locating' ? <Loader2 size={18} className="animate-spin" /> : <LocateFixed size={18} />}
-                {p.geoStatus === 'locating' ? 'กำลังหาตำแหน่ง…' : 'เปิดตำแหน่ง'}
+                {p.geoStatus === 'locating' ? 'กำลังหาตำแหน่ง…' : 'ใช้ตำแหน่งปัจจุบัน'}
               </button>
-              <button className="mt-1 min-h-[40px] w-full text-xs text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline" onClick={p.onUseDemo}>
-                ทดลองใช้ตำแหน่งสาธิต (อ.อ่าวลึก)
+              <button className="mt-1.5 min-h-[40px] w-full rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-300 hover:bg-white/10" onClick={p.onUseDemo}>
+                หรือทดลองใช้พิกัด อ.อ่าวลึก (กระบี่)
               </button>
             </div>
           )}
@@ -237,11 +265,9 @@ export function RoutePlanner(p: Props) {
               </div>
 
               {!p.destination && (
-                <p className="flex items-start gap-2 rounded-xl bg-safety/10 p-2.5 text-xs text-safety">
-                  <MapPin size={14} className="mt-0.5 shrink-0" />
-                  <span>
-                    <b>ขั้นที่ 3:</b> แตะบนแผนที่เพื่อปักหมุดปลายทาง หรือค้นหาสถานที่ด้านล่าง
-                  </span>
+                <p className="flex items-center gap-2 rounded-xl bg-safety/10 px-3 py-2 text-xs text-safety">
+                  <MapPin size={14} className="shrink-0" />
+                  <span>พิมพ์ชื่อสถานที่ด้านล่าง หรือ<b>แตะบนแผนที่</b>เพื่อเลือกจุดหมาย</span>
                 </p>
               )}
 
@@ -312,7 +338,7 @@ export function RoutePlanner(p: Props) {
           {p.destination && p.planning && !r && (
             <div className="flex items-center gap-3 rounded-2xl border border-ocean-400/30 bg-ocean-500/10 p-3 text-sm text-ocean-200" role="status">
               <Loader2 size={18} className="animate-spin" />
-              <span>AI กำลังวิเคราะห์เส้นทางกับรายงานน้ำท่วมจากประชาชน…</span>
+              <span>กำลังหาเส้นทางที่รถคุณผ่านได้…</span>
             </div>
           )}
 
@@ -330,33 +356,61 @@ export function RoutePlanner(p: Props) {
               )}
             >
               <div className="flex items-center gap-2">
-                {r.status === 'safe' ? <CheckCircle2 size={20} className="text-safe" /> : <AlertTriangle size={20} className="text-red-300" />}
-                <p className={cn('text-sm font-semibold', r.status === 'safe' ? 'text-green-300' : 'text-red-300')}>
-                  {r.status === 'safe' ? 'พบเส้นทางที่รถของคุณผ่านได้' : 'ไม่มีเส้นทางที่รถของคุณผ่านได้'}
+                {r.status === 'safe' ? <CheckCircle2 size={20} className="shrink-0 text-safe" /> : <AlertTriangle size={20} className="shrink-0 text-red-300" />}
+                <p className={cn('text-sm font-semibold leading-snug', r.status === 'safe' ? 'text-green-300' : 'text-red-300')}>
+                  {r.status === 'safe' ? 'รถของคุณผ่านเส้นทางนี้ได้' : 'น้ำท่วมสูงเกินรถของคุณ'}
                 </p>
-                <p className="ml-auto text-right">
+                <p className="ml-auto shrink-0 text-right">
                   <span className="text-lg font-bold text-white">{Math.round(r.durationMin)} นาที</span>
                   <span className="ml-1.5 text-xs text-slate-400">{formatDistance(r.distance)}</span>
                 </p>
               </div>
 
               {r.status === 'unsafe' && (
-                <button className="btn-danger mt-2 !min-h-[40px] w-full text-xs" onClick={p.onRequestHelp}>
+                <button className="btn-danger mt-2.5 !min-h-[44px] w-full text-sm" onClick={p.onRequestHelp}>
                   ขอความช่วยเหลือ
                 </button>
               )}
 
-              {/* AI เหตุผล */}
+              {/* เริ่มนำทาง (Primary CTA) */}
+              {!p.navigating ? (
+                r.status === 'safe' && (
+                  <button className="btn-primary mt-2.5 w-full" onClick={p.onStartNav} disabled={p.planning}>
+                    <Navigation size={18} /> เริ่มนำทาง
+                  </button>
+                )
+              ) : (
+                <div className="mt-2.5 space-y-2">
+                  {p.navStep && (
+                    <div className="flex items-center gap-3 rounded-xl bg-ocean-500/20 p-3" role="status" aria-live="polite">
+                      {(() => {
+                        const I = MANEUVER_ICON[p.navStep.maneuver];
+                        return <I size={28} className="shrink-0 text-ocean-300" />;
+                      })()}
+                      <div className="min-w-0 leading-tight">
+                        <p className="text-sm font-semibold text-white">{p.navStep.instruction}</p>
+                        {p.navDistToNext != null && <p className="text-xs text-slate-300">อีก {formatDistance(p.navDistToNext)}</p>}
+                        {p.navStep.warning && <p className="mt-0.5 text-xs text-amber-300">{p.navStep.warning}</p>}
+                      </div>
+                    </div>
+                  )}
+                  <button className="btn-ghost w-full" onClick={p.onStopNav}>
+                    <Square size={16} /> หยุดนำทาง
+                  </button>
+                </div>
+              )}
+
+              {/* รายละเอียดเพิ่มเติม (ซ่อนไว้เป็นค่าเริ่มต้น ลดความรก) */}
               <button
-                className="mt-2 flex min-h-[40px] w-full items-center gap-2 rounded-lg px-1 text-xs font-medium text-ocean-300"
+                className="mt-2 flex min-h-[40px] w-full items-center gap-2 rounded-lg px-1 text-xs font-medium text-ocean-300 hover:bg-white/5"
                 onClick={() => setShowWhy((s) => !s)}
                 aria-expanded={showWhy}
               >
-                <Brain size={14} /> AI อธิบายการตัดสินใจ
+                <Brain size={14} /> ทำไมถึงเลือกเส้นทางนี้? {r.hazards.length > 0 ? `(มีจุดน้ำท่วม ${r.hazards.length} จุด)` : ''}
                 <ChevronDown size={16} className={cn('ml-auto transition', showWhy && 'rotate-180')} />
               </button>
               {showWhy && (
-                <div className="space-y-2">
+                <div className="space-y-2 pb-1">
                   <ul className="space-y-1.5 text-xs text-slate-300">
                     {r.reasoning.map((t, i) => (
                       <li key={i} className="flex gap-2">
@@ -367,7 +421,7 @@ export function RoutePlanner(p: Props) {
                   </ul>
                   {r.hazards.length > 0 && (
                     <div>
-                      <p className="mb-1 text-[11px] font-semibold tracking-wider text-slate-400">รายงานน้ำท่วมบนเส้นทางนี้</p>
+                      <p className="mb-1 text-[11px] font-semibold tracking-wider text-slate-400">จุดน้ำท่วมบนเส้นทางนี้</p>
                       <ul className="space-y-1">
                         {r.hazards.slice(0, 6).map((h) => (
                           <li key={h.id} className="flex items-center gap-2 rounded-lg bg-navy-950/50 px-2 py-1.5 text-xs">
@@ -388,47 +442,18 @@ export function RoutePlanner(p: Props) {
                   )}
                   {r.avoided.length > 0 && (
                     <p className="text-[11px] text-slate-400">
-                      เส้นประสีแดงบนแผนที่ = เส้นทางที่เร็วที่สุดซึ่ง AI ปฏิเสธ (หลบ {r.avoided.length} จุด)
+                      เส้นประสีแดง = ทางลัดที่น้ำท่วมสูงเกินรถคุณ (หลบให้แล้ว {r.avoided.length} จุด)
                     </p>
                   )}
-                  <p className="text-[11px] text-slate-500">
-                    แหล่งเส้นทาง: {r.source === 'osrm' ? 'ถนนจริง (OSRM / OpenStreetMap)' : 'แผนที่ถนนสำรองในเครื่อง (ออฟไลน์)'}
-                  </p>
-                </div>
-              )}
-
-              {/* เริ่มนำทาง */}
-              {!p.navigating ? (
-                <button className="btn-primary mt-2 w-full" onClick={p.onStartNav} disabled={p.planning || r.status !== 'safe'}>
-                  <Navigation size={18} /> เริ่มนำทาง
-                </button>
-              ) : (
-                <div className="mt-2 space-y-2">
-                  {p.navStep && (
-                    <div className="flex items-center gap-3 rounded-xl bg-ocean-500/20 p-3" role="status" aria-live="polite">
-                      {(() => {
-                        const I = MANEUVER_ICON[p.navStep.maneuver];
-                        return <I size={28} className="shrink-0 text-ocean-300" />;
-                      })()}
-                      <div className="min-w-0 leading-tight">
-                        <p className="text-sm font-semibold text-white">{p.navStep.instruction}</p>
-                        {p.navDistToNext != null && <p className="text-xs text-slate-300">อีก {formatDistance(p.navDistToNext)}</p>}
-                        {p.navStep.warning && <p className="mt-0.5 text-xs text-amber-300">{p.navStep.warning}</p>}
-                      </div>
-                    </div>
-                  )}
-                  <button className="btn-ghost w-full" onClick={p.onStopNav}>
-                    <Square size={16} /> หยุดนำทาง
-                  </button>
                 </div>
               )}
 
               <button
-                className="mt-1 flex min-h-[40px] w-full items-center justify-between rounded-lg px-1 text-xs font-medium text-ocean-300"
+                className="mt-1 flex min-h-[40px] w-full items-center justify-between rounded-lg px-1 text-xs font-medium text-ocean-300 hover:bg-white/5"
                 onClick={() => setShowSteps((s) => !s)}
                 aria-expanded={showSteps}
               >
-                นำทางทีละจุด · {r.steps.length} ขั้นตอน
+                ดูวิธีเลี้ยวทีละจุด ({r.steps.length} ขั้นตอน)
                 <ChevronDown size={16} className={cn('transition', showSteps && 'rotate-180')} />
               </button>
               {showSteps && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Car, Info, Layers, LocateFixed, Phone, Plus, X } from 'lucide-react';
+import { Info, Layers, LocateFixed, Phone, Plus, X } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
 import { DepthLegend } from '@/components/DepthLegend';
 import { HotlineSheet } from '@/components/HotlineSheet';
@@ -45,21 +45,11 @@ export default function CitizenPage() {
   const [padding, setPadding] = useState({ top: 80, bottom: 120, left: 60, right: 60 });
   const { zones } = useFloodStore();
 
-  // โหลดข้อมูลรถที่เคยบันทึกไว้ – ถ้ายังไม่มีให้บังคับกรอก
+  // โหลดข้อมูลรถที่เคยบันทึกไว้ (ไม่บังคับเปิด modal ทับหน้าจอ ให้เลือกแบบแตะครั้งเดียวในแผงหลักได้)
   useEffect(() => {
     const v = loadVehicle();
     setVehicle(v);
     setVehicleReady(true);
-    if (!v) setVehicleOpen(true);
-    // ผู้ใช้ใหม่: เปิดคำอธิบายสัญลักษณ์ให้ดูครั้งแรก (เฉพาะจอใหญ่ เพื่อไม่บังแผนที่บนมือถือ)
-    try {
-      if (!localStorage.getItem('floodsafe.legend.seen') && window.innerWidth >= 640) {
-        setShowLegend(true);
-        localStorage.setItem('floodsafe.legend.seen', '1');
-      }
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   useEffect(() => {
@@ -289,6 +279,10 @@ export default function CitizenPage() {
             {vehicleReady && (
               <RoutePlanner
                 vehicle={vehicle}
+                onQuickSelectVehicle={(v) => {
+                  saveVehicle(v);
+                  setVehicle(v);
+                }}
                 onEditVehicle={() => setVehicleOpen(true)}
                 geoStatus={gps.status}
                 locationReady={locationReady}
@@ -314,8 +308,8 @@ export default function CitizenPage() {
           </div>
         </div>
 
-        {/* map tools */}
-        <div className="absolute bottom-28 right-3 z-10 flex flex-col items-end gap-2 sm:bottom-24">
+        {/* map tools (มีป้ายกำกับชัดเจน กดง่ายทั้งมือถือและเดสก์ท็อป) */}
+        <div className="absolute bottom-24 right-3 z-10 flex flex-col items-end gap-2">
           {showLegend && (
             <div className="relative max-h-[50dvh] w-72 animate-fade overflow-y-auto rounded-2xl">
               <DepthLegend full />
@@ -324,21 +318,18 @@ export default function CitizenPage() {
               </button>
             </div>
           )}
-          <div className="glass flex flex-col overflow-hidden rounded-2xl">
-            <ToolBtn label="คำอธิบายสัญลักษณ์" active={showLegend} onClick={() => setShowLegend((s) => !s)}>
-              <Info size={20} />
+          <div className="glass flex flex-col gap-0.5 overflow-hidden rounded-2xl p-1">
+            <ToolBtn label="ตำแหน่งฉัน" onClick={locateMe}>
+              <LocateFixed size={16} />
             </ToolBtn>
-            <ToolBtn label="พื้นที่น้ำท่วมจากดาวเทียม" active={showZones} onClick={() => setShowZones((s) => !s)}>
-              <Layers size={20} />
+            <ToolBtn label="สายด่วน" onClick={() => setHotlineOpen(true)}>
+              <Phone size={16} className="text-red-400" />
             </ToolBtn>
-            <ToolBtn label="สายด่วนช่วยเหลือ (ปภ. 1784 / แพทย์ฉุกเฉิน 1669)" onClick={() => setHotlineOpen(true)}>
-              <Phone size={20} className="text-red-400" />
+            <ToolBtn label="สัญลักษณ์" active={showLegend} onClick={() => setShowLegend((s) => !s)}>
+              <Info size={16} />
             </ToolBtn>
-            <ToolBtn label="ข้อมูลรถของฉัน" onClick={() => setVehicleOpen(true)}>
-              <Car size={20} />
-            </ToolBtn>
-            <ToolBtn label="ตำแหน่งของฉัน" onClick={locateMe}>
-              <LocateFixed size={20} />
+            <ToolBtn label="เขตน้ำท่วม" active={showZones} onClick={() => setShowZones((s) => !s)}>
+              <Layers size={16} />
             </ToolBtn>
           </div>
         </div>
@@ -362,27 +353,24 @@ export default function CitizenPage() {
           </div>
         )}
 
-        {/* สถานะตำแหน่ง + แหล่งข้อมูล */}
-        <div className="pointer-events-none absolute right-3 top-3 z-10 hidden max-w-[60%] flex-col items-end gap-1.5 sm:flex">
+        {/* สถานะตำแหน่งแบบกระชับ */}
+        <div className="pointer-events-none absolute right-3 top-3 z-10 hidden sm:flex">
           <p className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] text-slate-200">
-            <span className={cn('h-2 w-2 rounded-full', usingGps ? 'bg-safe' : hasGps ? 'bg-safety' : useDemo ? 'bg-safety' : 'bg-slate-500')} />
+            <span className={cn('h-2 w-2 rounded-full', usingGps ? 'bg-safe' : hasGps || useDemo ? 'bg-safety' : 'bg-slate-500')} />
             {usingGps
-              ? `ตำแหน่งจริงจาก GPS${gps.accuracy ? ` (±${Math.round(gps.accuracy)} ม.)` : ''}`
-              : hasGps
-                ? 'GPS อยู่นอกกระบี่ – ใช้ตำแหน่งสาธิต'
-                : useDemo
-                  ? 'ตำแหน่งสาธิต (ไม่ใช่ GPS จริง)'
-                  : gps.status === 'locating'
-                    ? 'กำลังหาตำแหน่ง…'
-                    : 'ยังไม่ได้เปิดตำแหน่ง'}
+              ? 'GPS จริง'
+              : hasGps || useDemo
+                ? 'พิกัดสาธิต (กระบี่)'
+                : gps.status === 'locating'
+                  ? 'กำลังหาตำแหน่ง…'
+                  : 'ยังไม่ได้เปิด GPS'}
           </p>
-          <p className="glass rounded-full px-3 py-1.5 text-[11px] text-yellow-200">ระดับน้ำ/พื้นที่น้ำท่วม: ข้อมูลจำลอง</p>
         </div>
       </main>
 
       <VehicleSetup
         open={vehicleOpen}
-        required={!vehicle}
+        required={false}
         initial={vehicle}
         onSave={(v) => {
           saveVehicle(v);
@@ -402,11 +390,14 @@ function ToolBtn({ children, label, onClick, active }: { children: React.ReactNo
     <button
       onClick={onClick}
       aria-label={label}
-      title={label}
       aria-pressed={active}
-      className={cn('grid h-12 w-12 place-items-center transition hover:bg-white/10', active ? 'text-ocean-300' : 'text-slate-300')}
+      className={cn(
+        'flex min-h-[40px] items-center gap-2 rounded-xl px-2.5 text-xs font-medium transition hover:bg-white/10',
+        active ? 'bg-ocean-500/15 text-ocean-300' : 'text-slate-200',
+      )}
     >
       {children}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
