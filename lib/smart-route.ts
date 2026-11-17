@@ -1,4 +1,5 @@
-import { bearing, haversine, offsetPoint, type LngLat } from './geo';
+import { haversine, type LngLat } from './geo';
+import { ROAD_NODES } from './road-network';
 import { computeRoute, type RouteResult, type RouteStep } from './routing';
 import { distToLine, hazardsAlong, type RouteHazard } from './route-eval';
 import type { Checkpoint } from './types';
@@ -42,7 +43,7 @@ function fetchCandidates(points: LngLat[], alternatives: boolean, signal?: Abort
   const coordStr = points.map((p) => `${p[0]},${p[1]}`).join(';');
   const directUrl =
     `${OSRM_URL}/route/v1/driving/${coordStr}` +
-    `?alternatives=${alternatives ? 'true' : 'false'}&overview=full&geometries=geojson&steps=true`;
+    `?alternatives=${alternatives ? 'true' : 'false'}&continue_straight=true&overview=full&geometries=geojson&steps=true`;
   const proxyUrl = `/api/route?coords=${encodeURIComponent(coordStr)}&alternatives=${alternatives ? 'true' : 'false'}`;
 
   // ลองเรียก OSRM โดยตรงก่อน ถ้าไม่ได้ให้ fallback ผ่าน /api/route ของเซิร์ฟเวอร์
@@ -205,9 +206,13 @@ export async function planRoute(
       const cur = scored.reduce((a, b) => (b.blocked.length < a.blocked.length || (b.blocked.length === a.blocked.length && b.maxDepth < a.maxDepth) ? b : a));
       const firstBlocked = [...cur.blocked].sort((a, b) => indexAlong(cur.c.coords, [a.lng, a.lat]) - indexAlong(cur.c.coords, [b.lng, b.lat]))[0];
       const hp: LngLat = [firstBlocked.lng, firstBlocked.lat];
-      const dir = bearing(origin, dest);
-      const vias: LngLat[] = [];
-      for (const dm of [1200, 2800]) for (const side of [90, -90]) vias.push(offsetPoint(hp, dir + side, dm));
+      const mid: LngLat = [(origin[0] + dest[0]) / 2, (origin[1] + dest[1]) / 2];
+      // เลือกจุดแวะอ้อมจากจุดตัดถนนหลักจริง (ROAD_NODES) ที่อยู่ห่างจุดน้ำท่วม >= 600 ม. เพื่อไม่ให้หลุดเข้าซอยตัน/ทางเดินเท้า
+      const vias: LngLat[] = Object.values(ROAD_NODES)
+        .filter((n) => haversine([n.lng, n.lat], hp) >= 600 && haversine([n.lng, n.lat], origin) >= 400 && haversine([n.lng, n.lat], dest) >= 400)
+        .sort((a, b) => haversine([a.lng, a.lat], mid) - haversine([b.lng, b.lat], mid))
+        .slice(0, 4)
+        .map((n) => [n.lng, n.lat] as LngLat);
       const results = await Promise.allSettled(vias.map((v) => fetchCandidates([origin, v, dest], false, signal)));
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       detourTried += vias.length;

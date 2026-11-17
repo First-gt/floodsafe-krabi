@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'bad_coords' }, { status: 400 });
   }
 
-  const url = `${OSRM_URL}/route/v1/driving/${coords}?alternatives=${alternatives}&overview=full&geometries=geojson&steps=true`;
+  const url = `${OSRM_URL}/route/v1/driving/${coords}?alternatives=${alternatives}&continue_straight=true&overview=full&geometries=geojson&steps=true`;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10_000), cache: 'no-store' });
     if (!res.ok) return NextResponse.json({ error: `osrm_${res.status}` }, { status: 502 });
