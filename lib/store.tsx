@@ -9,6 +9,7 @@ import type { Checkpoint, EquipmentStock, FloodZone, Incident, Referral, Referra
 interface State {
   checkpoints: Checkpoint[];
   incidents: Incident[];
+  zones: FloodZone[];
   teams: Team[];
   equipment: EquipmentStock[];
   live: boolean;
@@ -23,6 +24,8 @@ type Action =
   | { type: 'reopen'; id: string }
   | { type: 'refer'; id: string; referral: Referral }
   | { type: 'referralStatus'; id: string; referralId: string; status: ReferralStatus; at: number }
+  | { type: 'seed'; stage: 'report' | 'all' }
+  | { type: 'clear' }
   | { type: 'live'; value: boolean };
 
 function release(state: State, inc: Incident): Pick<State, 'teams' | 'equipment'> {
@@ -38,6 +41,7 @@ function release(state: State, inc: Incident): Pick<State, 'teams' | 'equipment'
 function reducer(state: State, a: Action): State {
   switch (a.type) {
     case 'tick': {
+      if (state.checkpoints.length === 0) return state;
       const target = state.checkpoints[a.index % state.checkpoints.length];
       const depthCm = Math.max(0, Math.min(150, target.depthCm + a.delta));
       return {
@@ -103,19 +107,50 @@ function reducer(state: State, a: Action): State {
             : i,
         ),
       };
+    case 'seed': {
+      if (a.stage === 'report') {
+        const sampleCpIds = new Set(['cp09', 'cp10', 'cp11']);
+        const sampleIncIds = new Set(['i101']);
+        return {
+          ...state,
+          lastUpdate: Date.now(),
+          checkpoints: INITIAL_CHECKPOINTS.filter((c) => sampleCpIds.has(c.id)),
+          incidents: INITIAL_INCIDENTS.filter((i) => sampleIncIds.has(i.id)),
+          zones: FLOOD_ZONES.slice(1, 3),
+        };
+      }
+      return {
+        ...state,
+        lastUpdate: Date.now(),
+        checkpoints: INITIAL_CHECKPOINTS,
+        incidents: INITIAL_INCIDENTS,
+        zones: FLOOD_ZONES,
+      };
+    }
+    case 'clear':
+      return {
+        ...state,
+        checkpoints: [],
+        incidents: [],
+        zones: [],
+        teams: TEAMS,
+        equipment: INITIAL_EQUIPMENT,
+        lastUpdate: null,
+      };
     case 'live':
       return { ...state, live: a.value };
   }
 }
 
 interface Store extends State {
-  zones: FloodZone[];
   addReport: (input: ReportInput) => { checkpoint: Checkpoint; incident: Incident | null };
   dispatchIncident: (id: string, teamIds: string[], equipment: Record<string, number>) => void;
   markRescued: (id: string) => void;
   reopen: (id: string) => void;
   addReferral: (incidentId: string, agencyId: string, channel: ReferralChannel) => void;
   setReferralStatus: (incidentId: string, referralId: string, status: ReferralStatus) => void;
+  seedDemoData: (stage: 'report' | 'all') => void;
+  clearDemoData: () => void;
   setLive: (v: boolean) => void;
 }
 
@@ -123,13 +158,27 @@ const Ctx = createContext<Store | null>(null);
 
 export function FloodStoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, {
-    checkpoints: INITIAL_CHECKPOINTS,
-    incidents: INITIAL_INCIDENTS,
+    checkpoints: [],
+    incidents: [],
+    zones: [],
     teams: TEAMS,
     equipment: INITIAL_EQUIPMENT,
     live: true,
     lastUpdate: null,
   });
+
+  // หากเคยดูสาธิตจบแล้ว (และไม่ได้เปิดด้วย ?demo=1) ให้โหลดข้อมูลสาธิตไว้พร้อมทดสอบ
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const forceDemo = params.get('demo') === '1' || params.get('judge') === '1';
+      if (!forceDemo && localStorage.getItem('floodsafe.tour.v1') === '1') {
+        dispatch({ type: 'seed', stage: 'all' });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Simulated real-time feed: every few seconds a random checkpoint's depth drifts by a few cm.
   useEffect(() => {
@@ -190,7 +239,6 @@ export function FloodStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Store>(
     () => ({
       ...state,
-      zones: FLOOD_ZONES,
       addReport,
       dispatchIncident: (id, teamIds, equipment) => dispatch({ type: 'dispatch', id, teamIds, equipment, at: Date.now() }),
       markRescued: (id) => dispatch({ type: 'rescue', id, at: Date.now() }),
@@ -200,6 +248,8 @@ export function FloodStoreProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'refer', id, referral: { id: `r-${at}-${agencyId}`, agencyId, channel, status: 'sent', at, updatedAt: at } });
       },
       setReferralStatus: (id, referralId, status) => dispatch({ type: 'referralStatus', id, referralId, status, at: Date.now() }),
+      seedDemoData: (stage) => dispatch({ type: 'seed', stage }),
+      clearDemoData: () => dispatch({ type: 'clear' }),
       setLive: (v) => dispatch({ type: 'live', value: v }),
     }),
     [state, addReport],

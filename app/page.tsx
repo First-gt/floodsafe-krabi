@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, GraduationCap, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
+import { CommitteeTour, type TourStepId } from '@/components/CommitteeTour';
 import { DepthLegend } from '@/components/DepthLegend';
 import { HotlineSheet } from '@/components/HotlineSheet';
 import { FloodMap } from '@/components/MapView';
@@ -16,16 +17,18 @@ import { distToLine } from '@/lib/route-eval';
 import { planRoute } from '@/lib/smart-route';
 import { useFloodStore } from '@/lib/store';
 import { useGeolocation } from '@/lib/use-geolocation';
-import { loadVehicle, saveVehicle, type VehicleProfile } from '@/lib/vehicle';
+import { defaultProfile, loadVehicle, saveVehicle, type VehicleProfile } from '@/lib/vehicle';
 import { cn } from '@/lib/utils';
 
 /** ระยะ (ม.) ที่ถือว่าออกนอกเส้นทาง */
 const OFF_ROUTE_M = 150;
 
 export default function CitizenPage() {
-  const { checkpoints } = useFloodStore();
+  const { checkpoints, zones, seedDemoData, clearDemoData } = useFloodStore();
   const gps = useGeolocation();
 
+  const [tourActive, setTourActive] = useState(false);
+  const [tourStep, setTourStep] = useState<TourStepId>('intro');
   const [mode, setMode] = useState<'choose' | 'route'>('choose');
   const [vehicle, setVehicle] = useState<VehicleProfile | null>(null);
   const [vehicleReady, setVehicleReady] = useState(false);
@@ -44,7 +47,59 @@ export default function CitizenPage() {
   const [fitTo, setFitTo] = useState<{ coords: LngLat[]; key: number } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [padding, setPadding] = useState({ top: 80, bottom: 120, left: 60, right: 60 });
-  const { zones } = useFloodStore();
+
+  // เปิดโหมดสาธิตสำหรับกรรมการ ม.อ. อัตโนมัติเมื่อเข้าครั้งแรก หรือเปิดด้วยลิงก์ ?demo=1 / ?judge=1
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const forceDemo = params.get('demo') === '1' || params.get('judge') === '1';
+      if (forceDemo || localStorage.getItem('floodsafe.tour.v1') !== '1') {
+        setTourActive(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleTourStep = useCallback(
+    (step: TourStepId) => {
+      setTourStep(step);
+      if (step === 'intro') {
+        clearDemoData();
+        setMode('choose');
+        setDestination(null);
+        setFlyTo({ center: SONGKLA_CENTER, zoom: 9.4, key: Date.now() });
+      } else if (step === 'report') {
+        seedDemoData('report');
+        setMode('choose');
+        setDestination(null);
+        setFlyTo({ center: [100.485, 7.022], zoom: 12.6, key: Date.now() });
+      } else if (step === 'route') {
+        setMode('route');
+        setVehicle(defaultProfile('sedan', 'รถเก๋ง (สาธิต)'));
+        setUseDemo(true);
+        setDestination({ name: 'โรงพยาบาลสงขลานครินทร์ (ม.อ.)', coord: [100.4954, 7.0074] });
+      } else if (step === 'dashboard') {
+        seedDemoData('all');
+        setFlyTo({ center: SONGKLA_CENTER, zoom: 9.3, key: Date.now() });
+      } else if (step === 'ready') {
+        setMode('choose');
+        setDestination(null);
+      }
+    },
+    [clearDemoData, seedDemoData],
+  );
+
+  const handleTourFinish = useCallback(() => {
+    try {
+      localStorage.setItem('floodsafe.tour.v1', '1');
+    } catch {
+      /* ignore */
+    }
+    setTourActive(false);
+    setMode('choose');
+    setDestination(null);
+  }, []);
 
   // โหลดข้อมูลรถที่เคยบันทึกไว้ (ไม่บังคับเปิด modal ทับหน้าจอ ให้เลือกแบบแตะครั้งเดียวในแผงหลักได้)
   useEffect(() => {
@@ -256,8 +311,13 @@ export default function CitizenPage() {
       <AppHeader />
       <main className="relative flex min-h-0 flex-1 flex-col sm:flex-row">
         {/* แถบซ้ายบนเดสก์ท็อป / การ์ดด้านบนบนมือถือ */}
-        <aside className="pointer-events-none absolute inset-x-2 bottom-24 top-2 z-10 flex flex-col sm:pointer-events-auto sm:static sm:z-20 sm:w-[400px] sm:shrink-0 sm:border-r sm:border-white/10 sm:bg-navy-900/95">
-          <div className="pointer-events-auto flex max-h-[54dvh] min-h-0 flex-1 flex-col sm:max-h-full">
+        <aside
+          className={cn(
+            'pointer-events-none absolute inset-x-2 bottom-24 top-2 z-10 flex flex-col sm:pointer-events-auto sm:static sm:z-20 sm:w-[400px] sm:shrink-0 sm:border-r sm:border-white/10 sm:bg-navy-900/95',
+            tourActive && 'sm:pointer-events-none',
+          )}
+        >
+          <div className={cn('flex max-h-[54dvh] min-h-0 flex-1 flex-col sm:max-h-full', tourActive ? 'pointer-events-none' : 'pointer-events-auto')}>
             {mode === 'choose' ? (
               <section
                 className="glass flex min-h-0 max-h-full flex-col rounded-3xl sm:h-full sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none sm:backdrop-blur-none"
@@ -397,6 +457,11 @@ export default function CitizenPage() {
               <ToolBtn label="เขตน้ำท่วม" active={showZones} onClick={() => setShowZones((s) => !s)}>
                 <Layers size={16} />
               </ToolBtn>
+              {!tourActive && (
+                <ToolBtn label="สาธิตวิธีใช้" onClick={() => setTourActive(true)}>
+                  <GraduationCap size={16} className="text-ocean-300" />
+                </ToolBtn>
+              )}
             </div>
             {showLegend && (
               <div className="relative max-h-[50dvh] w-72 animate-fade overflow-y-auto rounded-2xl">
@@ -445,6 +510,7 @@ export default function CitizenPage() {
       />
       <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} gps={gps} />
       {hotlineOpen && <HotlineSheet onClose={() => setHotlineOpen(false)} />}
+      <CommitteeTour active={tourActive} onStepChange={handleTourStep} onFinish={handleTourFinish} />
     </div>
   );
 }
