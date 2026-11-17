@@ -39,15 +39,21 @@ function fetchCandidates(points: LngLat[], alternatives: boolean, signal?: Abort
   const hit = cache.get(key);
   if (hit) return hit;
   if (cache.size > 80) cache.clear();
-  const url =
-    `${OSRM_URL}/route/v1/driving/${points.map((p) => `${p[0]},${p[1]}`).join(';')}` +
+  const coordStr = points.map((p) => `${p[0]},${p[1]}`).join(';');
+  const directUrl =
+    `${OSRM_URL}/route/v1/driving/${coordStr}` +
     `?alternatives=${alternatives ? 'true' : 'false'}&overview=full&geometries=geojson&steps=true`;
-  // ไม่ผูก signal กับ cache เพื่อไม่ให้ผลที่ถูกยกเลิกค้างอยู่ใน cache
+  const proxyUrl = `/api/route?coords=${encodeURIComponent(coordStr)}&alternatives=${alternatives ? 'true' : 'false'}`;
+
+  // ลองเรียก OSRM โดยตรงก่อน ถ้าไม่ได้ให้ fallback ผ่าน /api/route ของเซิร์ฟเวอร์
   const p = (async () => {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 12000);
+    const timer = setTimeout(() => ctrl.abort(), 10000);
     try {
-      const res = await fetch(url, { signal: ctrl.signal });
+      let res = await fetch(proxyUrl, { signal: ctrl.signal }).catch(() => null);
+      if (!res || !res.ok) {
+        res = await fetch(directUrl, { signal: ctrl.signal });
+      }
       if (!res.ok) throw new Error(`OSRM ${res.status}`);
       const data = await res.json();
       if (data.code !== 'Ok' || !data.routes?.length) throw new Error(data.code || 'NO_ROUTE');
@@ -201,7 +207,7 @@ export async function planRoute(
       const hp: LngLat = [firstBlocked.lng, firstBlocked.lat];
       const dir = bearing(origin, dest);
       const vias: LngLat[] = [];
-      for (const dm of [1500, 3500, 6000]) for (const side of [90, -90]) vias.push(offsetPoint(hp, dir + side, dm));
+      for (const dm of [1200, 2800]) for (const side of [90, -90]) vias.push(offsetPoint(hp, dir + side, dm));
       const results = await Promise.allSettled(vias.map((v) => fetchCandidates([origin, v, dest], false, signal)));
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       detourTried += vias.length;

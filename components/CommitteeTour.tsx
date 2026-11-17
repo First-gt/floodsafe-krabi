@@ -161,8 +161,16 @@ export function CommitteeTour() {
           onClick={() => {
             if (isLast) {
               finishTour();
+              if (pathname !== '/') router.push('/');
             } else {
-              setTourStepIdx(tourStepIdx + 1);
+              const nextIdx = tourStepIdx + 1;
+              const nextId = TOUR_STEPS[nextIdx]?.id;
+              setTourStepIdx(nextIdx);
+              if (nextId === 'dashboard' && pathname !== '/dashboard') {
+                router.push('/dashboard');
+              } else if (nextId !== 'dashboard' && pathname !== '/') {
+                router.push('/');
+              }
             }
           }}
           className="btn-primary w-full justify-center text-sm"
