@@ -62,32 +62,22 @@ const STEPS: {
   },
 ];
 
-const READ_LOCK_SEC = 3;
+const READ_LOCK_SEC = 0;
 
 export function CommitteeTour({ active, onStepChange, onFinish }: Props) {
   const [idx, setIdx] = useState(0);
-  const [lockSec, setLockSec] = useState(READ_LOCK_SEC);
 
   // รีเซ็ตเมื่อเปิดโหมดสอนใหม่
   useEffect(() => {
     if (!active) return;
     setIdx(0);
-    setLockSec(READ_LOCK_SEC);
   }, [active]);
 
   // แจ้ง parent ทุกครั้งที่เปลี่ยนขั้น เพื่อสร้างข้อมูลจำลองสดบนแผนที่
   useEffect(() => {
     if (!active) return;
     onStepChange(STEPS[idx].id);
-    setLockSec(READ_LOCK_SEC);
   }, [active, idx, onStepChange]);
-
-  // นับถอยหลังสั้นๆ เพื่อกันการกดรัวข้ามโดยไม่อ่าน
-  useEffect(() => {
-    if (!active || lockSec <= 0) return;
-    const t = setTimeout(() => setLockSec((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [active, lockSec]);
 
   if (!active) return null;
 
@@ -136,7 +126,7 @@ export function CommitteeTour({ active, onStepChange, onFinish }: Props) {
 
       <div className="mt-3 flex items-center justify-end">
         <button
-          disabled={lockSec > 0}
+          type="button"
           onClick={() => {
             if (isLast) {
               onFinish();
@@ -146,9 +136,7 @@ export function CommitteeTour({ active, onStepChange, onFinish }: Props) {
           }}
           className="btn-primary w-full justify-center text-sm"
         >
-          {lockSec > 0 ? (
-            <>กรุณาดูตัวอย่างบนหน้าจอ ({lockSec} วิ)…</>
-          ) : isLast ? (
+          {isLast ? (
             <>
               <CheckCircle2 size={16} /> เริ่มใช้งานระบบจริง
             </>

@@ -314,9 +314,14 @@ export default function CitizenPage() {
         <aside
           className={cn(
             'pointer-events-none absolute inset-x-2 bottom-24 top-2 z-10 flex flex-col sm:pointer-events-auto sm:static sm:z-20 sm:w-[400px] sm:shrink-0 sm:border-r sm:border-white/10 sm:bg-navy-900/95',
-            tourActive && 'sm:pointer-events-none',
+            tourActive && 'sm:pointer-events-none sm:opacity-90',
           )}
         >
+          {tourActive && (
+            <div className="hidden items-center justify-between border-b border-ocean-400/30 bg-ocean-500/15 px-4 py-2 text-[11px] font-medium text-ocean-200 sm:flex">
+              <span>กำลังสาธิตระบบ ({tourStep === 'ready' ? '5/5' : 'ดูจบเพื่อปลดล็อก'})</span>
+            </div>
+          )}
           <div className={cn('flex max-h-[54dvh] min-h-0 flex-1 flex-col sm:max-h-full', tourActive ? 'pointer-events-none' : 'pointer-events-auto')}>
             {mode === 'choose' ? (
               <section
