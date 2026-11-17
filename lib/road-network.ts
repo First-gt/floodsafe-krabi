@@ -1,4 +1,5 @@
 import { distToSegment, haversine, lerp, type LngLat } from './geo';
+import geometry from './road-geometry.json';
 import type { District } from './types';
 
 /**
@@ -21,6 +22,8 @@ export interface RoadEdge {
   geometry: LngLat[];
   length: number;
 }
+
+const GEO = geometry as unknown as Record<string, [number, number][]>;
 
 const n = (id: string, name: string, lng: number, lat: number, district: District): RoadNode => ({
   id,
@@ -87,12 +90,22 @@ function polyLength(g: LngLat[]): number {
 }
 
 export const ROAD_EDGES: RoadEdge[] = RAW_EDGES.map(([id, a, b, road]) => {
-  const g: LngLat[] = [
+  const g = (GEO[id] as LngLat[] | undefined) ?? [
     [ROAD_NODES[a].lng, ROAD_NODES[a].lat],
     [ROAD_NODES[b].lng, ROAD_NODES[b].lat],
   ];
   return { id, a, b, road, geometry: g, length: polyLength(g) };
 });
+
+// snap graph nodes onto the real road network
+for (const ed of ROAD_EDGES) {
+  const first = ed.geometry[0];
+  const last = ed.geometry[ed.geometry.length - 1];
+  ROAD_NODES[ed.a].lng = first[0];
+  ROAD_NODES[ed.a].lat = first[1];
+  ROAD_NODES[ed.b].lng = last[0];
+  ROAD_NODES[ed.b].lat = last[1];
+}
 
 export const nodeCoord = (id: string): LngLat => [ROAD_NODES[id].lng, ROAD_NODES[id].lat];
 
