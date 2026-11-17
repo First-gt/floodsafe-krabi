@@ -30,10 +30,13 @@ import {
   Square,
   Truck,
   Undo2,
+  Volume2,
+  VolumeX,
   X,
   type LucideIcon,
 } from 'lucide-react';
 import { formatDistance } from '@/lib/geo';
+import { speakThai, stopVoice } from '@/lib/voice-nav';
 import { DISTRICT_TH } from '@/lib/labels';
 import { PLACES } from '@/lib/mock-data';
 import type { RouteResult, RouteStep } from '@/lib/routing';
@@ -118,7 +121,25 @@ export function RoutePlanner(p: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true);
   const [nominatimResults, setNominatimResults] = useState<Place[]>([]);
+
+  // เสียงพูดนำทางเมื่อเริ่ม/เปลี่ยนขั้นตอนนำทาง
+  useEffect(() => {
+    if (!p.navigating || !voiceOn) {
+      stopVoice();
+      return;
+    }
+    if (!p.navStep) {
+      speakThai('เริ่มนำทางแล้ว ขับขี่อย่างปลอดภัย');
+      return;
+    }
+    const distText = p.navDistToNext != null ? `อีก ${formatDistance(p.navDistToNext)} ` : '';
+    const warnText = p.navStep.warning ? ` ระวัง ${p.navStep.warning}` : '';
+    speakThai(`${distText}${p.navStep.instruction}${warnText}`);
+  }, [p.navigating, p.navStep, p.navDistToNext, voiceOn]);
+
+  useEffect(() => () => stopVoice(), []);
 
   useEffect(() => {
     const q = query.trim().toLowerCase();
@@ -432,9 +453,20 @@ export function RoutePlanner(p: Props) {
                       </div>
                     </div>
                   )}
-                  <button className="btn-ghost w-full" onClick={p.onStopNav}>
-                    <Square size={16} /> หยุดนำทาง
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="btn-ghost shrink-0 px-3 text-xs"
+                      onClick={() => setVoiceOn((v) => !v)}
+                      aria-label={voiceOn ? 'ปิดเสียงนำทาง' : 'เปิดเสียงนำทาง'}
+                    >
+                      {voiceOn ? <Volume2 size={16} className="text-ocean-300" /> : <VolumeX size={16} className="text-slate-400" />}
+                      {voiceOn ? 'เสียงเปิด' : 'เสียงปิด'}
+                    </button>
+                    <button className="btn-ghost flex-1" onClick={p.onStopNav}>
+                      <Square size={16} /> หยุดนำทาง
+                    </button>
+                  </div>
                 </div>
               )}
 

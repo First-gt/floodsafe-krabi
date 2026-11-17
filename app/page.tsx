@@ -93,6 +93,9 @@ export default function CitizenPage() {
   const handleTourFinish = useCallback(() => {
     try {
       localStorage.setItem('floodsafe.tour.v1', '1');
+      if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     } catch {
       /* ignore */
     }
