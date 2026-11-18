@@ -123,6 +123,7 @@ export function RoutePlanner(p: Props) {
   const [showWhy, setShowWhy] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true);
   const [nominatimResults, setNominatimResults] = useState<Place[]>([]);
+  const [searching, setSearching] = useState(false);
 
   // เสียงพูดนำทางเมื่อเริ่ม/เปลี่ยนขั้นตอนนำทาง
   useEffect(() => {
@@ -145,8 +146,10 @@ export function RoutePlanner(p: Props) {
     const q = query.trim().toLowerCase();
     if (q.length < 2) {
       setNominatimResults([]);
+      setSearching(false);
       return;
     }
+    setSearching(true);
     const timer = setTimeout(async () => {
       try {
         const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
@@ -157,8 +160,10 @@ export function RoutePlanner(p: Props) {
         }
       } catch (err) {
         console.error('Place search failed:', err);
+      } finally {
+        setSearching(false);
       }
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -166,17 +171,17 @@ export function RoutePlanner(p: Props) {
     const q = query.trim().toLowerCase();
     const local = PLACES.filter(
       (pl) => !q || pl.name.toLowerCase().includes(q) || pl.alias.toLowerCase().includes(q) || DISTRICT_TH[pl.district].includes(q),
-    ).slice(0, 5);
-    
+    ).slice(0, q ? 3 : 6);
+
     if (!q) return local;
 
     const combined = [...local];
     for (const nom of nominatimResults) {
-      if (!combined.some(c => c.name === nom.name || (Math.abs(c.lng - nom.lng) < 0.0001 && Math.abs(c.lat - nom.lat) < 0.0001))) {
+      if (!combined.some((c) => c.name === nom.name || (Math.abs(c.lng - nom.lng) < 0.0001 && Math.abs(c.lat - nom.lat) < 0.0001))) {
         combined.push(nom);
       }
     }
-    return combined.slice(0, 6);
+    return combined.slice(0, 8);
   }, [query, nominatimResults]);
 
   const select = (pl: Place) => {
@@ -334,11 +339,20 @@ export function RoutePlanner(p: Props) {
                 <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   className="field pl-9 pr-10"
-                  placeholder={p.destination ? p.destination.name : 'ค้นหาปลายทาง หรือแตะบนแผนที่'}
+                  placeholder={p.destination ? p.destination.name : 'พิมพ์ชื่อสถานที่ หรือแตะบนแผนที่'}
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setFocused(true);
+                  }}
                   onFocus={() => setFocused(true)}
-                  onBlur={() => setTimeout(() => setFocused(false), 150)}
+                  onBlur={() => setTimeout(() => setFocused(false), 180)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && matches.length > 0) {
+                      e.preventDefault();
+                      select(matches[0]);
+                    }
+                  }}
                   aria-label="ปลายทาง"
                   aria-expanded={focused}
                 />
@@ -355,8 +369,15 @@ export function RoutePlanner(p: Props) {
                   </button>
                 )}
                 {focused && (
-                  <ul className="glass absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-2xl p-1.5" role="listbox">
-                    {matches.length === 0 && <li className="px-3 py-2 text-sm text-slate-500">ไม่พบสถานที่ – ลองแตะบนแผนที่แทน</li>}
+                  <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-2xl border border-ocean-400/30 bg-navy-900 p-1.5 shadow-2xl" role="listbox">
+                    {searching && (
+                      <li className="flex items-center gap-2 px-3 py-2 text-xs text-ocean-300">
+                        <Loader2 size={14} className="animate-spin" /> กำลังค้นหาสถานที่…
+                      </li>
+                    )}
+                    {!searching && matches.length === 0 && (
+                      <li className="px-3 py-2 text-sm text-slate-400">ไม่พบสถานที่ – ลองพิมพ์คำอื่นหรือแตะบนแผนที่</li>
+                    )}
                     {matches.map((pl) => {
                       const Icon = KIND_ICON[pl.kind];
                       return (
@@ -371,7 +392,9 @@ export function RoutePlanner(p: Props) {
                             <Icon size={16} className="shrink-0 text-ocean-300" />
                             <span className="min-w-0 leading-tight">
                               <span className="block truncate text-sm text-slate-100">{pl.name}</span>
-                              <span className="block truncate text-[11px] text-slate-500">อ.{DISTRICT_TH[pl.district]}</span>
+                              <span className="block truncate text-[11px] text-slate-400">
+                                {pl.alias && pl.id.startsWith('nom-') ? pl.alias : `อ.${DISTRICT_TH[pl.district]}`}
+                              </span>
                             </span>
                           </button>
                         </li>

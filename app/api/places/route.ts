@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q');
+  const query = searchParams.get('q')?.trim();
 
   if (!query) {
     return NextResponse.json({ error: 'Missing query' }, { status: 400 });
@@ -12,14 +12,13 @@ export async function GET(request: Request) {
 
   if (LONGDO_KEY && LONGDO_KEY !== 'วาง_KEY_ตรงนี้') {
     try {
-      // Use Longdo Map Search API (restrict search vaguely to Songkhla by adding "สงขลา")
       const searchKeyword = query.includes('สงขลา') || query.includes('หาดใหญ่') ? query : `${query} สงขลา`;
       const url = `https://search.longdo.com/mapsearch/json/search?keyword=${encodeURIComponent(
         searchKeyword
       )}&limit=6&key=${LONGDO_KEY}`;
-      
-      const res = await fetch(url);
-      const data = await res.json(); // Longdo might return a JSON array or { data: [...] } or { meta, data }
+
+      const res = await fetch(url, { signal: AbortSignal.timeout(4500), cache: 'no-store' });
+      const data = await res.json();
 
       let results = [];
       if (Array.isArray(data)) {
@@ -29,33 +28,47 @@ export async function GET(request: Request) {
       }
 
       if (results.length > 0) {
-        const mapped = results.map((item: any) => ({
-          id: `longdo-${item.id || Math.random().toString(36).substring(7)}`,
-          name: item.name || item.title || query,
-          alias: item.address || item.description || '',
-          district: 'Hat Yai', // fallback
-          lng: parseFloat(item.lon || item.longitude),
-          lat: parseFloat(item.lat || item.latitude),
-          kind: 'town',
-        })).filter((m: any) => !isNaN(m.lng) && !isNaN(m.lat));
-        
-        return NextResponse.json({ results: mapped, source: 'longdo' });
+        const mapped = results
+          .map((item: any) => ({
+            id: `longdo-${item.id || Math.random().toString(36).substring(7)}`,
+            name: item.name || item.title || query,
+            alias: item.address || item.description || '',
+            district: 'Hat Yai',
+            lng: parseFloat(item.lon || item.longitude),
+            lat: parseFloat(item.lat || item.latitude),
+            kind: 'town',
+          }))
+          .filter((m: any) => !isNaN(m.lng) && !isNaN(m.lat));
+
+        if (mapped.length > 0) {
+          return NextResponse.json({ results: mapped, source: 'longdo' });
+        }
       }
     } catch (err) {
       console.error('Longdo API Error:', err);
-      // Fallback to OSM
     }
   }
 
-  // Fallback to OpenStreetMap Nominatim if no Longdo Key or Longdo fails
+  // Fallback to OpenStreetMap Nominatim (prioritize Songkhla viewbox)
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-      query
-    )}+songkhla&format=json&limit=5&countrycodes=th`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'FloodSafeSongkhla/1.0' } });
-    const data = await res.json();
+    const fetchNom = async (q: string) => {
+      const url =
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}` +
+        `&format=json&limit=6&countrycodes=th&viewbox=100.05,7.95,101.05,6.35&bounded=0`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'FloodSafeSongkhla/1.0' },
+        signal: AbortSignal.timeout(5000),
+        cache: 'no-store',
+      });
+      return (await res.json()) as any[];
+    };
 
-    const mapped = data.map((item: any) => ({
+    let data = await fetchNom(`${query} สงขลา`);
+    if (!Array.isArray(data) || data.length === 0) {
+      data = await fetchNom(query);
+    }
+
+    const mapped = (Array.isArray(data) ? data : []).map((item: any) => ({
       id: `nom-${item.place_id}`,
       name: item.name || item.display_name.split(',')[0],
       alias: item.display_name,
