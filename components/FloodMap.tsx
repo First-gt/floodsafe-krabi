@@ -21,6 +21,7 @@ export interface FloodMapProps {
   userLocation?: LngLat | null;
   showZones?: boolean;
   showHeatmap?: boolean;
+  satellite?: boolean;
   compactCheckpoints?: boolean;
   selectedIncidentId?: string | null;
   pickMode?: boolean;
@@ -48,6 +49,35 @@ export interface FloodMapProps {
  */
 const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;
 const LONGDO_KEY = process.env.NEXT_PUBLIC_LONGDO_KEY;
+const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
+
+const SAT_SOURCES = {
+  'sat-imagery': {
+    type: 'raster' as const,
+    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+    tileSize: 256,
+    maxzoom: 19,
+    attribution: '© Esri, Maxar, Earthstar Geographics',
+  },
+  'sat-roads': {
+    type: 'raster' as const,
+    tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'],
+    tileSize: 256,
+    maxzoom: 19,
+  },
+  'sat-labels': {
+    type: 'raster' as const,
+    tiles: ['https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],
+    tileSize: 256,
+    maxzoom: 19,
+  },
+};
+
+const SAT_LAYERS: maplibregl.LayerSpecification[] = [
+  { id: 'sat-imagery-layer', type: 'raster', source: 'sat-imagery', minzoom: 0, maxzoom: 20 },
+  { id: 'sat-roads-layer', type: 'raster', source: 'sat-roads', minzoom: 0, maxzoom: 20 },
+  { id: 'sat-labels-layer', type: 'raster', source: 'sat-labels', minzoom: 0, maxzoom: 20 },
+];
 
 const VECTOR_STYLE_URL: maplibregl.StyleSpecification | string = LONGDO_KEY && LONGDO_KEY !== 'วาง_KEY_ตรงนี้'
   ? {
@@ -58,16 +88,19 @@ const VECTOR_STYLE_URL: maplibregl.StyleSpecification | string = LONGDO_KEY && L
           tiles: [`https://ms.longdo.com/mmmap/tile.php?zoom={z}&x={x}&y={y}&key=${LONGDO_KEY}&proj=epsg3857&mode=icons`],
           tileSize: 256,
           attribution: '© <a href="https://map.longdo.com/">Longdo Map</a>'
-        }
+        },
+        ...SAT_SOURCES,
       },
       layers: [
+        { id: 'bg', type: 'background', paint: { 'background-color': '#0b1120' } },
         {
           id: 'longdo-raster',
           type: 'raster',
           source: 'longdo',
           minzoom: 0,
           maxzoom: 20
-        }
+        },
+        ...SAT_LAYERS,
       ]
     }
   : MAPTILER_KEY
@@ -87,10 +120,12 @@ const FALLBACK_STYLE: maplibregl.StyleSpecification = {
         ? '© <a href="https://www.maptiler.com/copyright/">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     },
+    ...SAT_SOURCES,
   },
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': '#0b1120' } },
     { id: 'base', type: 'raster', source: 'base' },
+    ...SAT_LAYERS,
   ],
 };
 
@@ -230,6 +265,37 @@ export default function FloodMap(props: FloodMapProps) {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['match', ['get', 'status'], 'safe', '#22d3ee', '#f59e0b'], 'line-width': 6 },
       });
+
+      // หากมี Google Maps Key และเปิดใช้ Map Tiles API ไว้ ให้ดึงชั้นภาพดาวเทียม+ถนนของ Google Maps มาทับอัตโนมัติ
+      if (GOOGLE_KEY && !map.getSource('google-sat')) {
+        fetch(`https://tile.googleapis.com/v1/createSession?key=${GOOGLE_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mapType: 'satellite', language: 'th', region: 'TH', layerTypes: ['layerRoadmap'] }),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            if (!d?.session || !mapRef.current || mapRef.current.getSource('google-sat')) return;
+            mapRef.current.addSource('google-sat', {
+              type: 'raster',
+              tiles: [`https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=${d.session}&key=${GOOGLE_KEY}`],
+              tileSize: 256,
+              maxzoom: 20,
+              attribution: '© Google Maps',
+            });
+            mapRef.current.addLayer(
+              {
+                id: 'google-sat-layer',
+                type: 'raster',
+                source: 'google-sat',
+                layout: { visibility: propsRef.current.satellite === false ? 'none' : 'visible' },
+              },
+              'zones-fill',
+            );
+          })
+          .catch(() => {});
+      }
+
       setReady(true);
     });
 
@@ -250,6 +316,15 @@ export default function FloodMap(props: FloodMapProps) {
   };
 
   // ---- layers data ----
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const vis = props.satellite === false ? 'none' : 'visible';
+    for (const id of ['sat-imagery-layer', 'sat-roads-layer', 'sat-labels-layer', 'google-sat-layer']) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+    }
+  }, [ready, props.satellite]);
+
   useEffect(() => {
     if (!ready) return;
     setData('zones', { type: 'FeatureCollection', features: props.zones });

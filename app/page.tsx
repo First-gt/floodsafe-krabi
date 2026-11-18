@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, GraduationCap, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, Globe, GraduationCap, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
 import { TOUR_STEPS } from '@/components/CommitteeTour';
 import { DepthLegend } from '@/components/DepthLegend';
@@ -39,6 +39,7 @@ export default function CitizenPage() {
   const [routeOrigin, setRouteOrigin] = useState<LngLat | null>(null);
   const [navigating, setNavigating] = useState(false);
   const [showZones, setShowZones] = useState(true);
+  const [satellite, setSatellite] = useState(true);
   const [showLegend, setShowLegend] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [hotlineOpen, setHotlineOpen] = useState(false);
@@ -406,6 +407,7 @@ export default function CitizenPage() {
             destination={destination?.coord ?? null}
             userLocation={usingGps ? gps.position : locationReady ? origin : null}
             showZones={showZones}
+            satellite={satellite}
             pickMode={mode === 'route' && ready}
             onMapClick={dropPin}
             places={PLACES}
@@ -431,6 +433,9 @@ export default function CitizenPage() {
               </ToolBtn>
               <ToolBtn label="สัญลักษณ์" active={showLegend} onClick={() => setShowLegend((s) => !s)}>
                 <Info size={16} />
+              </ToolBtn>
+              <ToolBtn label="ดาวเทียม" active={satellite} onClick={() => setSatellite((s) => !s)}>
+                <Globe size={16} />
               </ToolBtn>
               <ToolBtn label="เขตน้ำท่วม" active={showZones} onClick={() => setShowZones((s) => !s)}>
                 <Layers size={16} />

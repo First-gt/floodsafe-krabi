@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Flame, Layers, ListChecks, Map as MapIcon, Waves } from 'lucide-react';
+import { Flame, Globe, Layers, ListChecks, Map as MapIcon, Waves } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
 import { IncidentCard } from '@/components/IncidentCard';
 import { FloodMap } from '@/components/MapView';
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [view, setView] = useState<'list' | 'map'>('list');
   const [heat, setHeat] = useState(false);
   const [showZones, setShowZones] = useState(true);
+  const [satellite, setSatellite] = useState(true);
   const [flyTo, setFlyTo] = useState<{ center: LngLat; zoom?: number; key: number } | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -125,6 +126,7 @@ export default function DashboardPage() {
             compactCheckpoints
             showZones={showZones}
             showHeatmap={heat}
+            satellite={satellite}
             selectedIncidentId={selected}
             onSelectIncident={onMapSelect}
             flyTo={flyTo}
@@ -133,6 +135,15 @@ export default function DashboardPage() {
           />
           <div className="absolute right-3 top-3 z-10 flex flex-col gap-2">
             <div className="glass flex flex-col overflow-hidden rounded-2xl">
+              <button
+                onClick={() => setSatellite((s) => !s)}
+                aria-pressed={satellite}
+                aria-label="ภาพดาวเทียม"
+                title="ภาพดาวเทียม"
+                className={cn('flex h-12 items-center gap-2 border-b border-white/10 px-3 text-xs transition hover:bg-white/10', satellite ? 'text-ocean-300' : 'text-slate-300')}
+              >
+                <Globe size={18} /> <span className="hidden sm:inline">ดาวเทียม</span>
+              </button>
               <button
                 onClick={() => setHeat((h) => !h)}
                 aria-pressed={heat}
