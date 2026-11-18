@@ -63,7 +63,7 @@ export const INITIAL_CHECKPOINTS: Checkpoint[] = [
   { id: 'cp10', name: 'ถนนศุภสารรังสรรค์ (หาดใหญ่)', district: 'Hat Yai', lng: 100.485113, lat: 7.008903, depthCm: 42, source: 'volunteer', updatedAt: NOW - 7 * MIN },
   cp('cp11', 'แยกคอหงส์ (หน้า ม.อ.)', 'Hat Yai', 'e7', 0.25, 18, 'sensor', 4),
   cp('cp12', 'ถนนกาญจนวนิช – บ้านน้ำน้อย', 'Hat Yai', 'e6', 0.5, 28, 'citizen', 11),
-  cp('cp13', 'ถนนเพชรเกษม – ควนเนียง', 'Hat Yai', 'e10', 0.55, 36, 'citizen', 14),
+  cp('cp13', 'ถนนเพชรเกษม – ควนเนียง', 'Hat Yai', 'e10', 0.55, 15, 'citizen', 14),
   cp('cp14', 'ถนนสนามบิน – คลองหอยโข่ง', 'Hat Yai', 'e12', 0.5, 8, 'sensor', 2),
   cp('cp15', 'เทศบาลเมืองบ้านพรุ', 'Hat Yai', 'e13', 0.6, 45, 'citizen', 9),
   cp('cp16', 'ทางเลี่ยงเมืองหาดใหญ่ (ทล.414)', 'Hat Yai', 'e9', 0.5, 12, 'sensor', 3),
