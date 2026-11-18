@@ -137,20 +137,30 @@ export default function FloodMap(props: FloodMapProps) {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: VECTOR_STYLE_URL,
-      center: props.initialCenter ?? [98.93, 8.2],
+      center: props.initialCenter ?? [100.5, 7.12],
       zoom: props.initialZoom ?? 8.6,
       attributionControl: { compact: true },
+      maxTileCacheSize: 50,
+      fadeDuration: 0,
     });
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-    // ถ้าโหลด vector style ไม่ได้ (เช่น เครือข่ายบล็อก) ให้ fallback เป็น raster OSM
+    // บังคับปรับขนาดแผนที่อัตโนมัติ (แก้ปัญหา Safari / iPadOS แผนที่ไม่ยอมเรนเดอร์ตอนเปลี่ยนขนาดจอ)
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => map.resize()) : null;
+    ro?.observe(containerRef.current);
+
+    // ถ้าโหลด Longdo / vector style ไม่ได้ (เช่น บน iPad หรือเครือข่ายบล็อก) ให้สลับเป็น OpenStreetMap ทันที
     let fellBack = false;
+    let tileErrors = 0;
     map.on('error', (e) => {
       const sourceId = (e as { sourceId?: string }).sourceId;
-      if (!fellBack && !sourceId && !map.getSource('zones')) {
-        fellBack = true;
-        map.setStyle(FALLBACK_STYLE);
+      if (!fellBack && (!sourceId || sourceId === 'longdo')) {
+        tileErrors += sourceId ? 1 : 3;
+        if (tileErrors >= 3) {
+          fellBack = true;
+          map.setStyle(FALLBACK_STYLE);
+        }
       }
     });
 
@@ -226,6 +236,7 @@ export default function FloodMap(props: FloodMapProps) {
     map.on('click', (e) => propsRef.current.onMapClick?.([e.lngLat.lng, e.lngLat.lat]));
 
     return () => {
+      ro?.disconnect();
       map.remove();
       mapRef.current = null;
       setReady(false);

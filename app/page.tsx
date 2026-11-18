@@ -397,7 +397,7 @@ export default function CitizenPage() {
         </aside>
 
         {/* พื้นที่แผนที่เต็มจอฝั่งขวา */}
-        <div className="relative min-h-0 flex-1">
+        <div className="relative min-h-[280px] flex-1">
           <FloodMap
             checkpoints={checkpoints}
             zones={zones}
