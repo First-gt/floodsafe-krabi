@@ -127,7 +127,7 @@ export default function CitizenPage() {
     }
     const ctrl = new AbortController();
     setPlanning(true);
-    planRoute(routeOrigin, destination.coord, vehicle, checkpoints, destination.name, ctrl.signal)
+    planRoute(routeOrigin, destination.coord, vehicle, checkpointsRef.current, destination.name, ctrl.signal)
       .then((r) => {
         if (ctrl.signal.aborted) return;
         setRoute(r);
@@ -138,7 +138,7 @@ export default function CitizenPage() {
         setPlanning(false);
       });
     return () => ctrl.abort();
-  }, [destination, vehicle, routeOrigin, checkpoints]);
+  }, [destination, vehicle, routeOrigin, checkpoints.length]);
 
   // ล้างเส้นทางเก่าเมื่อเปลี่ยนปลายทาง/รถ
   useEffect(() => {

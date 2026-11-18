@@ -157,7 +157,8 @@ function checkpointPopup(c: Checkpoint): string {
 export default function FloodMap(props: FloodMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
-  const [ready, setReady] = useState(false);
+  const [styleVer, setStyleVer] = useState(0);
+  const ready = styleVer > 0;
   const cpMarkers = useRef<Marker[]>([]);
   const incMarkers = useRef<Marker[]>([]);
   const pointMarkers = useRef<Marker[]>([]);
@@ -307,7 +308,7 @@ export default function FloodMap(props: FloodMapProps) {
           .catch(() => {});
       }
 
-      setReady(true);
+      setStyleVer((v) => v + 1);
     });
 
     map.on('click', (e) => propsRef.current.onMapClick?.([e.lngLat.lng, e.lngLat.lat]));
@@ -316,7 +317,7 @@ export default function FloodMap(props: FloodMapProps) {
       ro?.disconnect();
       map.remove();
       mapRef.current = null;
-      setReady(false);
+      setStyleVer(0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -334,12 +335,12 @@ export default function FloodMap(props: FloodMapProps) {
     for (const id of ['sat-imagery-layer', 'sat-roads-layer', 'sat-labels-layer', 'google-sat-layer']) {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
     }
-  }, [ready, props.satellite]);
+  }, [styleVer, ready, props.satellite]);
 
   useEffect(() => {
     if (!ready) return;
     setData('zones', { type: 'FeatureCollection', features: props.zones });
-  }, [ready, props.zones]);
+  }, [styleVer, ready, props.zones]);
 
   useEffect(() => {
     if (!ready) return;
@@ -351,7 +352,7 @@ export default function FloodMap(props: FloodMapProps) {
         geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
       })),
     });
-  }, [ready, props.checkpoints]);
+  }, [styleVer, ready, props.checkpoints]);
 
   useEffect(() => {
     if (!ready) return;
@@ -366,7 +367,7 @@ export default function FloodMap(props: FloodMapProps) {
       'baseline',
       r?.baseline ? { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: r.baseline.coords } } : EMPTY,
     );
-  }, [ready, props.route]);
+  }, [styleVer, ready, props.route]);
 
   useEffect(() => {
     const map = mapRef.current;
