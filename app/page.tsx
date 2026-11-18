@@ -10,7 +10,7 @@ import { FloodMap } from '@/components/MapView';
 import { ReportSheet } from '@/components/ReportSheet';
 import { RoutePlanner, type Destination } from '@/components/RoutePlanner';
 import { VehicleSetup } from '@/components/VehicleSetup';
-import { haversine, type LngLat } from '@/lib/geo';
+import { bearing, haversine, type LngLat } from '@/lib/geo';
 import { DEMO_ORIGIN, PLACES, SONGKLA_CENTER } from '@/lib/mock-data';
 import type { RouteResult } from '@/lib/routing';
 import { distToLine } from '@/lib/route-eval';
@@ -38,6 +38,8 @@ export default function CitizenPage() {
   const [planning, setPlanning] = useState(false);
   const [routeOrigin, setRouteOrigin] = useState<LngLat | null>(null);
   const [navigating, setNavigating] = useState(false);
+  const [navFollow, setNavFollow] = useState(true);
+  const [followTrigger, setFollowTrigger] = useState(0);
   const [showZones, setShowZones] = useState(true);
   const [satellite, setSatellite] = useState(true);
   const [showLegend, setShowLegend] = useState(false);
@@ -197,7 +199,7 @@ export default function CitizenPage() {
 
   const livePos: LngLat = usingGps ? gps.position! : (routeOrigin ?? origin);
   const nav = useMemo(() => {
-    if (!navigating || !route || route.steps.length === 0) return { step: null, dist: null };
+    if (!navigating || !route || route.steps.length === 0) return { step: null, dist: null, heading: 0 };
     let uIdx = 0;
     let bd = Infinity;
     for (let i = 0; i < route.coords.length; i++) {
@@ -210,7 +212,9 @@ export default function CitizenPage() {
     let k = route.steps.findIndex((_, i) => i > 0 && stepIdx[i] > uIdx);
     if (k < 0) k = route.steps.length - 1;
     const s = route.steps[k];
-    return { step: s, dist: haversine(livePos, s.location) };
+    const ahead = route.coords[Math.min(route.coords.length - 1, uIdx + 3)] ?? s.location;
+    const heading = ahead[0] !== livePos[0] || ahead[1] !== livePos[1] ? bearing(livePos, ahead) : 0;
+    return { step: s, dist: haversine(livePos, s.location), heading };
   }, [navigating, route, stepIdx, livePos]);
 
   // ออกนอกเส้นทาง → คำนวณใหม่จากตำแหน่งปัจจุบัน
@@ -264,11 +268,16 @@ export default function CitizenPage() {
   }, [vehicle]);
 
   const locateMe = () => {
+    if (navigating) {
+      setNavFollow(true);
+      setFollowTrigger((n) => n + 1);
+      return;
+    }
     if (!hasGps) {
       gps.request();
       return;
     }
-    setFlyTo({ center: origin, zoom: 13, key: Date.now() });
+    setFlyTo({ center: origin, zoom: 13.5, key: Date.now() });
   };
 
   // เมื่อเริ่มได้ตำแหน่งแล้ว ให้บินไปยังตำแหน่งนั้น
@@ -374,7 +383,11 @@ export default function CitizenPage() {
                   onRequestHelp={() => setReportOpen(true)}
                   notice={notice}
                   navigating={navigating}
-                  onStartNav={() => setNavigating(true)}
+                  onStartNav={() => {
+                    setNavigating(true);
+                    setNavFollow(true);
+                    setFollowTrigger((n) => n + 1);
+                  }}
                   onStopNav={() => setNavigating(false)}
                   navStep={nav.step}
                   navDistToNext={nav.dist}
@@ -420,7 +433,29 @@ export default function CitizenPage() {
             padding={padding}
             initialCenter={SONGKLA_CENTER}
             initialZoom={9.4}
+            navigating={navigating && navFollow}
+            navBearing={nav.heading}
+            followTrigger={followTrigger}
+            onUserDrag={() => {
+              if (navigating) setNavFollow(false);
+            }}
           />
+
+          {/* ปุ่มปรับมุมกล้องขับรถ 3 มิติ (แสดงเมื่อเลื่อนแผนที่ออกขณะนำทาง) */}
+          {navigating && !navFollow && (
+            <div className="absolute bottom-28 left-1/2 z-20 -translate-x-1/2 sm:bottom-8">
+              <button
+                type="button"
+                onClick={() => {
+                  setNavFollow(true);
+                  setFollowTrigger((n) => n + 1);
+                }}
+                className="btn-primary rounded-full px-5 shadow-2xl shadow-ocean-500/40"
+              >
+                <LocateFixed size={18} /> ปรับมุมขับรถ 3 มิติ
+              </button>
+            </div>
+          )}
 
           {/* แถบเครื่องมือแผนที่แบบแนวนอนด้านบนขวา (เดสก์ท็อป) / ด้านล่างขวา (มือถือ) */}
           <div className="absolute bottom-24 right-3 z-10 flex flex-col items-end gap-2 sm:bottom-auto sm:top-3">

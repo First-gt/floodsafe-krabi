@@ -38,6 +38,13 @@ export interface FloodMapProps {
   onPlaceClick?: (p: Place) => void;
   /** แสดงชื่ออำเภอบนแผนที่เมื่อซูมออก */
   showDistrictLabels?: boolean;
+  /** โหมดกำลังนำทางขับขี่ 3 มิติ (มุมกล้องเอียง + หันหัวตามทิศทาง) */
+  navigating?: boolean;
+  /** ทิศทางหน้ารถ (องศา 0-360) */
+  navBearing?: number;
+  /** กดเพื่อรีเซ็นเตอร์กล้องกลับเข้าโหมดนำทาง 3 มิติ */
+  followTrigger?: number;
+  onUserDrag?: () => void;
 }
 
 /**
@@ -312,6 +319,7 @@ export default function FloodMap(props: FloodMapProps) {
     });
 
     map.on('click', (e) => propsRef.current.onMapClick?.([e.lngLat.lng, e.lngLat.lat]));
+    map.on('dragstart', () => propsRef.current.onUserDrag?.());
 
     return () => {
       ro?.disconnect();
@@ -511,6 +519,27 @@ export default function FloodMap(props: FloodMapProps) {
     if (!ready || !map) return;
     map.getCanvas().style.cursor = props.pickMode ? 'crosshair' : '';
   }, [ready, props.pickMode]);
+
+  // ---- กล้อง 3 มิติโหมดขับรถ (Google Maps Heading-Up + Pitch 58°) ----
+  const wasNavRef = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    if (props.navigating && props.userLocation) {
+      wasNavRef.current = true;
+      map.easeTo({
+        center: props.userLocation,
+        zoom: 16.6,
+        pitch: 58,
+        bearing: props.navBearing ?? 0,
+        duration: 750,
+      });
+    } else if (!props.navigating && wasNavRef.current) {
+      wasNavRef.current = false;
+      map.easeTo({ pitch: 0, bearing: 0, zoom: 13.2, duration: 600 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, props.navigating, props.followTrigger, props.userLocation?.[0], props.userLocation?.[1], props.navBearing]);
 
   return (
     <div className="absolute inset-0">
