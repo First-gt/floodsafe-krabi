@@ -279,7 +279,7 @@ export async function planRoute(
 
     const hazardsOnRoute = best.hazards;
     const wet = best.caution.length + best.blocked.length;
-    const baselineDiff = best.c !== fastest.c;
+    const baselineDiff = status === 'safe' && best.c !== fastest.c;
     return {
       status,
       source: 'osrm',

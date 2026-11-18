@@ -461,9 +461,17 @@ export function RoutePlanner(p: Props) {
               )}
 
               {r.status === 'unsafe' && (
-                <button className="btn-danger mt-2.5 !min-h-[44px] w-full text-sm" onClick={p.onRequestHelp}>
-                  ขอความช่วยเหลือ
-                </button>
+                <div className="mt-2.5 space-y-2">
+                  <p className="text-xs leading-relaxed text-slate-300">
+                    ทุกเส้นทางไปจุดหมายนี้มีน้ำท่วมเกินรถของคุณ แนะนำให้เปลี่ยนไปศูนย์พักพิงที่ปลอดภัย หรือกดขอความช่วยเหลือ
+                  </p>
+                  <button className="btn-primary !min-h-[44px] w-full text-sm" onClick={p.onNearestShelter} disabled={p.planning}>
+                    <Home size={16} /> หาศูนย์พักพิงที่ปลอดภัยใกล้สุด
+                  </button>
+                  <button className="btn-danger !min-h-[44px] w-full text-sm" onClick={p.onRequestHelp}>
+                    ขอความช่วยเหลือ
+                  </button>
+                </div>
               )}
 
               {/* เริ่มนำทาง (Primary CTA) */}
