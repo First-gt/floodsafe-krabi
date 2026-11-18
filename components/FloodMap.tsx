@@ -266,6 +266,17 @@ export default function FloodMap(props: FloodMapProps) {
         paint: { 'line-color': ['match', ['get', 'status'], 'safe', '#22d3ee', '#f59e0b'], 'line-width': 6 },
       });
 
+      // เพิ่มชั้นภาพดาวเทียม Esri + ถนน/ชื่อสถานที่ (ใส่ใน style.load เสมอ เพื่อให้ทำงานได้ทั้งบน OpenFreeMap, Longdo และ OSM)
+      const satVis = propsRef.current.satellite === false ? 'none' : 'visible';
+      for (const [sid, src] of Object.entries(SAT_SOURCES)) {
+        if (!map.getSource(sid)) map.addSource(sid, src);
+      }
+      for (const layer of SAT_LAYERS) {
+        if (!map.getLayer(layer.id)) {
+          map.addLayer({ ...layer, layout: { visibility: satVis } }, 'zones-fill');
+        }
+      }
+
       // หากมี Google Maps Key และเปิดใช้ Map Tiles API ไว้ ให้ดึงชั้นภาพดาวเทียม+ถนนของ Google Maps มาทับอัตโนมัติ
       if (GOOGLE_KEY && !map.getSource('google-sat')) {
         fetch(`https://tile.googleapis.com/v1/createSession?key=${GOOGLE_KEY}`, {
