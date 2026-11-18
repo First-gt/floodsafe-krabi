@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+const inSongkhlaBox = (lng: number, lat: number) => lat >= 6.2 && lat <= 8.1 && lng >= 99.9 && lng <= 101.2;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q')?.trim();
@@ -38,7 +40,7 @@ export async function GET(request: Request) {
             lat: parseFloat(item.lat || item.latitude),
             kind: 'town',
           }))
-          .filter((m: any) => !isNaN(m.lng) && !isNaN(m.lat));
+          .filter((m: any) => !isNaN(m.lng) && !isNaN(m.lat) && inSongkhlaBox(m.lng, m.lat));
 
         if (mapped.length > 0) {
           return NextResponse.json({ results: mapped, source: 'longdo' });
@@ -49,12 +51,12 @@ export async function GET(request: Request) {
     }
   }
 
-  // Fallback to OpenStreetMap Nominatim (prioritize Songkhla viewbox)
+  // Fallback to OpenStreetMap Nominatim (strictly bounded to Songkhla)
   try {
     const fetchNom = async (q: string) => {
       const url =
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}` +
-        `&format=json&limit=6&countrycodes=th&viewbox=100.05,7.95,101.05,6.35&bounded=0`;
+        `&format=json&limit=8&countrycodes=th&viewbox=100.05,7.95,101.05,6.35&bounded=1`;
       const res = await fetch(url, {
         headers: { 'User-Agent': 'FloodSafeSongkhla/1.0' },
         signal: AbortSignal.timeout(5000),
@@ -63,20 +65,22 @@ export async function GET(request: Request) {
       return (await res.json()) as any[];
     };
 
-    let data = await fetchNom(`${query} สงขลา`);
+    let data = await fetchNom(query);
     if (!Array.isArray(data) || data.length === 0) {
-      data = await fetchNom(query);
+      data = await fetchNom(`${query} สงขลา`);
     }
 
-    const mapped = (Array.isArray(data) ? data : []).map((item: any) => ({
-      id: `nom-${item.place_id}`,
-      name: item.name || item.display_name.split(',')[0],
-      alias: item.display_name,
-      district: 'Hat Yai',
-      lng: parseFloat(item.lon),
-      lat: parseFloat(item.lat),
-      kind: item.type === 'hospital' ? 'hospital' : 'town',
-    }));
+    const mapped = (Array.isArray(data) ? data : [])
+      .map((item: any) => ({
+        id: `nom-${item.place_id}`,
+        name: item.name || item.display_name.split(',')[0],
+        alias: item.display_name,
+        district: 'Hat Yai',
+        lng: parseFloat(item.lon),
+        lat: parseFloat(item.lat),
+        kind: item.type === 'hospital' ? 'hospital' : 'town',
+      }))
+      .filter((m) => !isNaN(m.lng) && !isNaN(m.lat) && inSongkhlaBox(m.lng, m.lat));
     return NextResponse.json({ results: mapped, source: 'osm' });
   } catch (err) {
     console.error('OSM Nominatim Error:', err);
