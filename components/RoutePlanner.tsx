@@ -440,13 +440,25 @@ export function RoutePlanner(p: Props) {
               <div className="flex items-center gap-2">
                 {r.status === 'safe' ? <CheckCircle2 size={20} className="shrink-0 text-safe" /> : <AlertTriangle size={20} className="shrink-0 text-red-300" />}
                 <p className={cn('text-sm font-semibold leading-snug', r.status === 'safe' ? 'text-green-300' : 'text-red-300')}>
-                  {r.status === 'safe' ? 'รถของคุณผ่านเส้นทางนี้ได้' : 'น้ำท่วมสูงเกินรถของคุณ'}
+                  {r.status === 'safe' ? 'รถของคุณผ่านเส้นทางนี้ได้' : 'พบจุดน้ำท่วมสูงเกินรถของคุณ'}
                 </p>
                 <p className="ml-auto shrink-0 text-right">
                   <span className="text-lg font-bold text-white">{Math.round(r.durationMin)} นาที</span>
                   <span className="ml-1.5 text-xs text-slate-400">{formatDistance(r.distance)}</span>
                 </p>
               </div>
+
+              {/* แจ้งเตือนจุดน้ำท่วมให้เห็นทันทีโดยไม่ต้องกดขยาย */}
+              {r.status === 'safe' && r.avoided.length > 0 && (
+                <p className="mt-2 rounded-xl bg-ocean-500/15 px-2.5 py-1.5 text-xs text-ocean-200">
+                  หลบจุดน้ำท่วมให้แล้ว: {r.avoided.slice(0, 2).map((h) => `${h.name} (${Math.round(h.depthCm)} ซม.)`).join(' · ')}
+                </p>
+              )}
+              {r.status === 'unsafe' && r.hazards.some((h) => !h.passable) && (
+                <p className="mt-2 rounded-xl bg-danger/15 px-2.5 py-1.5 text-xs text-red-200">
+                  จุดน้ำท่วมเกิน {r.limitCm} ซม.: {r.hazards.filter((h) => !h.passable).slice(0, 3).map((h) => `${h.name} (${Math.round(h.depthCm)} ซม.)`).join(' · ')}
+                </p>
+              )}
 
               {r.status === 'unsafe' && (
                 <button className="btn-danger mt-2.5 !min-h-[44px] w-full text-sm" onClick={p.onRequestHelp}>

@@ -220,7 +220,7 @@ export async function planRoute(
       for (const r of results) {
         if (r.status !== 'fulfilled') continue;
         for (const c of r.value) {
-          if (c.distance > baseDist * 2.2 + 3000) continue;
+          if (c.distance > baseDist * 1.8 + 2000) continue;
           pool.push(c);
           scored.push(score(c, checkpoints, limit));
         }
