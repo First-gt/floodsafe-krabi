@@ -101,7 +101,7 @@ interface Scored {
   score: number;
 }
 
-const WET_PENALTY_S = 90;
+const WET_PENALTY_S = 600;
 
 function score(c: Candidate, checkpoints: Checkpoint[], limitCm: number): Scored {
   const hazards = hazardsAlong(c.coords, checkpoints, limitCm);
@@ -224,7 +224,12 @@ export async function planRoute(
       const dir = bearing(origin, dest);
       const mid: LngLat = [(origin[0] + dest[0]) / 2, (origin[1] + dest[1]) / 2];
 
-      const lateralVias: LngLat[] = [offsetPoint(hp, dir + 90, 750), offsetPoint(hp, dir - 90, 750)];
+      const lateralVias: LngLat[] = [
+        offsetPoint(hp, dir + 90, 750),
+        offsetPoint(hp, dir - 90, 750),
+        offsetPoint(hp, dir + 90, 2000),
+        offsetPoint(hp, dir - 90, 2000),
+      ];
       const dryNodes: LngLat[] = Object.values(ROAD_NODES)
         .filter((n) => {
           const p: LngLat = [n.lng, n.lat];
@@ -242,18 +247,21 @@ export async function planRoute(
       for (const r of results) {
         if (r.status !== 'fulfilled') continue;
         for (const c of r.value) {
-          if (c.distance > baseDist * 1.8 + 2000) continue;
+          if (c.distance > baseDist * 3 + 5000) continue;
           pool.push(c);
           scored.push(score(c, checkpoints, limit));
         }
       }
     }
 
-    // เลือกเส้นทาง
+    // เลือกเส้นทาง: ให้ความสำคัญสูงสุดกับเส้นทางที่ "ไม่มีน้ำท่วมเลย" (dry) ก่อนเส้นที่มีน้ำขังเล็กน้อย
     const safe = safeOnes();
+    const dry = safe.filter((s) => s.hazards.length === 0);
     let status: RouteResult['status'] = 'safe';
     let best: Scored;
-    if (safe.length) {
+    if (dry.length) {
+      best = dry.reduce((a, b) => (b.score < a.score ? b : a));
+    } else if (safe.length) {
       best = safe.reduce((a, b) => (b.score < a.score ? b : a));
     } else {
       status = 'unsafe';
