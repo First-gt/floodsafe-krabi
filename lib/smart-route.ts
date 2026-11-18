@@ -1,4 +1,4 @@
-import { haversine, type LngLat } from './geo';
+import { bearing, haversine, offsetPoint, type LngLat } from './geo';
 import { ROAD_NODES } from './road-network';
 import { computeRoute, type RouteResult, type RouteStep } from './routing';
 import { distToLine, hazardsAlong, type RouteHazard } from './route-eval';
@@ -210,19 +210,32 @@ export async function planRoute(
 
     const safeOnes = () => scored.filter((s) => s.blocked.length === 0);
 
-    // ไม่มีเส้นปลอดภัย → ลองอ้อมผ่านจุดแวะ
+    // ไม่มีเส้นปลอดภัย → ลองอ้อมผ่านจุดแวะข้างจุดน้ำท่วม + จุดตัดถนนหลักที่แห้ง (สูงสุด 2 รอบ)
+    const triedHazards = new Set<string>();
     for (let round = 0; round < 2 && safeOnes().length === 0; round++) {
-      // เส้นที่ "ดีที่สุดตอนนี้" = จุดน้ำสูงเกินน้อยที่สุด
       const cur = scored.reduce((a, b) => (b.blocked.length < a.blocked.length || (b.blocked.length === a.blocked.length && b.maxDepth < a.maxDepth) ? b : a));
-      const firstBlocked = [...cur.blocked].sort((a, b) => indexAlong(cur.c.coords, [a.lng, a.lat]) - indexAlong(cur.c.coords, [b.lng, b.lat]))[0];
+      const firstBlocked = [...cur.blocked]
+        .filter((h) => !triedHazards.has(h.id))
+        .sort((a, b) => indexAlong(cur.c.coords, [a.lng, a.lat]) - indexAlong(cur.c.coords, [b.lng, b.lat]))[0];
+      if (!firstBlocked) break;
+      triedHazards.add(firstBlocked.id);
+
       const hp: LngLat = [firstBlocked.lng, firstBlocked.lat];
+      const dir = bearing(origin, dest);
       const mid: LngLat = [(origin[0] + dest[0]) / 2, (origin[1] + dest[1]) / 2];
-      // เลือกจุดแวะอ้อมจากจุดตัดถนนหลักจริง (ROAD_NODES) ที่อยู่ห่างจุดน้ำท่วม >= 600 ม. เพื่อไม่ให้หลุดเข้าซอยตัน/ทางเดินเท้า
-      const vias: LngLat[] = Object.values(ROAD_NODES)
-        .filter((n) => haversine([n.lng, n.lat], hp) >= 600 && haversine([n.lng, n.lat], origin) >= 400 && haversine([n.lng, n.lat], dest) >= 400)
+
+      const lateralVias: LngLat[] = [offsetPoint(hp, dir + 90, 750), offsetPoint(hp, dir - 90, 750)];
+      const dryNodes: LngLat[] = Object.values(ROAD_NODES)
+        .filter((n) => {
+          const p: LngLat = [n.lng, n.lat];
+          if (haversine(p, hp) < 600 || haversine(p, origin) < 400 || haversine(p, dest) < 400) return false;
+          return !checkpoints.some((c) => c.depthCm > limit && haversine(p, [c.lng, c.lat]) < 450);
+        })
         .sort((a, b) => haversine([a.lng, a.lat], mid) - haversine([b.lng, b.lat], mid))
-        .slice(0, 4)
+        .slice(0, 2)
         .map((n) => [n.lng, n.lat] as LngLat);
+
+      const vias = [...lateralVias, ...dryNodes];
       const results = await Promise.allSettled(vias.map((v) => fetchCandidates([origin, v, dest], false, signal)));
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       detourTried += vias.length;
