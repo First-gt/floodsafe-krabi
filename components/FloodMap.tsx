@@ -185,6 +185,7 @@ export default function FloodMap(props: FloodMapProps) {
       attributionControl: { compact: true },
       maxTileCacheSize: 50,
       fadeDuration: 0,
+      maxPitch: 70,
     });
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
@@ -520,17 +521,18 @@ export default function FloodMap(props: FloodMapProps) {
     map.getCanvas().style.cursor = props.pickMode ? 'crosshair' : '';
   }, [ready, props.pickMode]);
 
-  // ---- กล้อง 3 มิติโหมดขับรถ (Google Maps Heading-Up + Pitch 58°) ----
+  // ---- กล้อง 3 มิติโหมดขับรถ (Google Maps Heading-Up + Pitch 60°) ----
   const wasNavRef = useRef(false);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
-    if (props.navigating && props.userLocation) {
+    if (props.navigating) {
       wasNavRef.current = true;
+      const target = props.userLocation ?? props.origin ?? (props.initialCenter ?? [100.4728, 7.0096]);
       map.easeTo({
-        center: props.userLocation,
+        center: target,
         zoom: 16.6,
-        pitch: 58,
+        pitch: 60,
         bearing: props.navBearing ?? 0,
         duration: 750,
       });

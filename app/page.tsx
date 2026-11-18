@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Globe, GraduationCap, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, Compass, Globe, GraduationCap, Info, Layers, LocateFixed, Phone, Plus, ShieldCheck, X } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
 import { TOUR_STEPS } from '@/components/CommitteeTour';
 import { DepthLegend } from '@/components/DepthLegend';
@@ -38,6 +38,7 @@ export default function CitizenPage() {
   const [planning, setPlanning] = useState(false);
   const [routeOrigin, setRouteOrigin] = useState<LngLat | null>(null);
   const [navigating, setNavigating] = useState(false);
+  const [driveView3D, setDriveView3D] = useState(false);
   const [navFollow, setNavFollow] = useState(true);
   const [followTrigger, setFollowTrigger] = useState(0);
   const [showZones, setShowZones] = useState(true);
@@ -433,16 +434,16 @@ export default function CitizenPage() {
             padding={padding}
             initialCenter={SONGKLA_CENTER}
             initialZoom={9.4}
-            navigating={navigating && navFollow}
+            navigating={(navigating || driveView3D) && navFollow}
             navBearing={nav.heading}
             followTrigger={followTrigger}
             onUserDrag={() => {
-              if (navigating) setNavFollow(false);
+              if (navigating || driveView3D) setNavFollow(false);
             }}
           />
 
           {/* ปุ่มปรับมุมกล้องขับรถ 3 มิติ (แสดงเมื่อเลื่อนแผนที่ออกขณะนำทาง) */}
-          {navigating && !navFollow && (
+          {(navigating || driveView3D) && !navFollow && (
             <div className="absolute bottom-28 left-1/2 z-20 -translate-x-1/2 sm:bottom-8">
               <button
                 type="button"
@@ -462,6 +463,20 @@ export default function CitizenPage() {
             <div className="glass flex flex-col gap-0.5 rounded-2xl p-1 sm:flex-row sm:items-center">
               <ToolBtn label="ตำแหน่งฉัน" onClick={locateMe}>
                 <LocateFixed size={16} />
+              </ToolBtn>
+              <ToolBtn
+                label="มุมมอง 3D"
+                active={driveView3D || navigating}
+                onClick={() => {
+                  const next = !driveView3D;
+                  setDriveView3D(next);
+                  if (next) {
+                    setNavFollow(true);
+                    setFollowTrigger((n) => n + 1);
+                  }
+                }}
+              >
+                <Compass size={16} />
               </ToolBtn>
               <ToolBtn label="สายด่วน 1784" onClick={() => setHotlineOpen(true)}>
                 <Phone size={16} className="text-red-400" />
