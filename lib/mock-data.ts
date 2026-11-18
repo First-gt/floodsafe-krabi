@@ -28,7 +28,7 @@ export const DISTRICTS: Record<District, { thai: string; center: LngLat; zoom: n
 export const SONGKLA_CENTER: LngLat = [100.5, 7.12];
 
 /** จุดเริ่มต้นสาธิต เมื่อ GPS ของเบราว์เซอร์ไม่อยู่ในจังหวัดสงขลา */
-export const DEMO_ORIGIN = { name: 'หาดใหญ่ (ตำแหน่งสาธิต)', coord: [100.4747, 7.0084] as LngLat };
+export const DEMO_ORIGIN = { name: 'หาดใหญ่ (ตำแหน่งสาธิต)', coord: [100.4728, 7.0096] as LngLat };
 
 /* ------------------------------------------------------------------ */
 /* จุดตรวจระดับน้ำจากประชาชน (วางบนเส้นถนนในกราฟ)                      */

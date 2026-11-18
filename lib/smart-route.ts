@@ -58,15 +58,24 @@ function fetchCandidates(points: LngLat[], alternatives: boolean, signal?: Abort
       if (!res.ok) throw new Error(`OSRM ${res.status}`);
       const data = await res.json();
       if (data.code !== 'Ok' || !data.routes?.length) throw new Error(data.code || 'NO_ROUTE');
-      return (data.routes as any[]).map(
-        (r): Candidate => ({
-          coords: r.geometry.coordinates,
-          distance: r.distance,
-          duration: r.duration,
-          steps: (r.legs as any[]).flatMap((l) => l.steps as RawStep[]),
-          detour: points.length > 2,
-        }),
-      );
+      const valid = (data.routes as any[])
+        .map(
+          (r): Candidate => ({
+            coords: r.geometry.coordinates,
+            distance: r.distance,
+            duration: r.duration,
+            steps: (r.legs as any[]).flatMap((l) => l.steps as RawStep[]),
+            detour: points.length > 2,
+          }),
+        )
+        .filter((c) => {
+          if (c.coords.length < 2) return false;
+          const dStart = haversine(points[0], c.coords[0]);
+          const dEnd = haversine(points[points.length - 1], c.coords[c.coords.length - 1]);
+          return dStart <= 600 && dEnd <= 600;
+        });
+      if (valid.length === 0) throw new Error('BAD_SNAP');
+      return valid;
     } finally {
       clearTimeout(timer);
     }
